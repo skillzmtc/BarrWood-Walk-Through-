@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BarrWood">
+  <meta name="theme-color" content="#0f2744">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>BarrWood Services</title>
+  <style>
+    :root {
+      --navy: #0f2744;
+      --blue: #1a5fa8;
+      --blue-mid: #2176c7;
+      --blue-light: #4da3e8;
+      --green: #2e9e52;
+      --green-light: #3dbf65;
+      --green-pale: #e8f7ee;
+      --blue-pale: #e8f2fc;
+      --surface: #f4f7fb;
+      --card: #ffffff;
+      --border: #d4e2f0;
+      --text: #0f2744;
+      --text-mid: #3d5a7a;
+      --text-light: #7a96b4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--surface); color: var(--text); max-width: 600px; margin: 0 auto; }
+
+    #app-header {
+      background: linear-gradient(160deg, var(--navy) 0%, var(--blue) 60%, var(--blue-mid) 100%);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 3px 20px rgba(15,39,68,.45);
+    }
+    .header-inner { padding: 14px 16px 0; }
+    .header-top { display: flex; align-items: center; gap: 14px; padding-bottom: 10px; }
+    .logo-circle {
+      width: 62px; height: 62px; border-radius: 14px; flex-shrink: 0;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25), 0 0 0 2px rgba(255,255,255,.2);
+      overflow: hidden;
+    }
+    .logo-circle img { width: 60px; height: 60px; object-fit: cover; }
+    .brand { flex: 1; }
+    .brand-name { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; }
+    .brand-sub { font-size: 11px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 2px; }
+    .header-btns { display: flex; gap: 8px; flex-shrink: 0; }
+    #btn-new {
+      background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.9); border-radius: 10px; padding: 9px 14px;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    #btn-export {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+      border: none; color: #fff; border-radius: 10px; padding: 9px 18px;
+      font-size: 13px; font-weight: 800; cursor: pointer; font-family: inherit;
+      box-shadow: 0 2px 8px rgba(46,158,82,.5);
+    }
+    .header-bar {
+      background: rgba(255,255,255,.08); border-top: 1px solid rgba(255,255,255,.1);
+      padding: 7px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    #item-count { font-size: 12px; color: rgba(255,255,255,.6); flex: 1; }
+    .header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: none; }
+    .header-dot.on { display: inline-block; }
+
+    #page { padding: 12px 10px 70px; }
+
+    .card {
+      background: var(--card); border-radius: 14px; margin-bottom: 10px;
+      box-shadow: 0 1px 6px rgba(15,39,68,.08), 0 0 0 1px rgba(15,39,68,.06);
+      overflow: hidden;
+    }
+    .acc-head {
+      display: flex; align-items: center; width: 100%; background: none;
+      border: none; padding: 14px 16px; cursor: pointer; gap: 12px;
+      text-align: left; border-left: 4px solid transparent; transition: background 0.15s;
+    }
+    .acc-head:active { background: var(--blue-pale); }
+    .acc-head.open { border-left-color: var(--blue-mid); background: linear-gradient(90deg, rgba(33,118,199,.05) 0%, transparent 100%); }
+    .acc-num {
+      font-size: 12px; font-weight: 900; color: var(--blue);
+      background: var(--blue-pale); border-radius: 8px;
+      width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; border: 1.5px solid rgba(33,118,199,.2);
+    }
+    .acc-label { font-size: 15px; font-weight: 700; color: var(--navy); flex: 1; }
+    .acc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .badge {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-light) 100%);
+      color: #fff; border-radius: 10px; padding: 2px 9px;
+      font-size: 11px; font-weight: 800; display: none;
+    }
+    .chevron { font-size: 13px; color: var(--text-light); }
+    .acc-body { border-top: 1px solid var(--border); display: none; }
+    .acc-body.open { display: block; }
+    .sec-body { padding: 14px 16px 16px; }
+
+    .row { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-end; }
+    .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .col.flex2 { flex: 2; }
+    .field-label { font-size: 11px; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.07em; }
+    input[type=text], input[type=email], input[type=date], input[type=number], select, .sqft-display {
+      border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 12px;
+      font-size: 14px; color: var(--text); background: var(--surface);
+      outline: none; width: 100%; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus { border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(33,118,199,.15); background: #fff; }
+    .sqft-display { color: var(--text-light); display: flex; align-items: center; min-height: 44px; }
+    .sqft-display.has-val { background: var(--green-pale); color: var(--green); font-weight: 700; border-color: #86efac; }
+    .math-sym { padding-top: 24px; color: var(--text-light); font-size: 18px; flex-shrink: 0; }
+
+    #f-estimate { border-color: #f0a500; background: #fffbeb; font-weight: 700; font-size: 15px; }
+    .est-required { font-size: 11px; color: #d97706; margin-top: 3px; display: none; }
+    .est-required.show { display: block; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .chip {
+      border: 1.5px solid var(--border); border-radius: 20px; padding: 7px 14px;
+      font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-mid);
+      font-family: inherit; line-height: 1; font-weight: 500; transition: all 0.15s;
+    }
+    .chip:active { transform: scale(0.96); }
+    .chip.on {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-mid) 100%);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 8px rgba(33,118,199,.35);
+    }
+    .chip.green-chip.on {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+      box-shadow: 0 2px 8px rgba(46,158,82,.35);
+    }
+
+    .prep-chip {
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px;
+      font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-mid);
+      font-family: inherit; text-align: left; width: 100%; margin-bottom: 7px; transition: all 0.15s;
+    }
+    .prep-chip.on {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(15,39,68,.3);
+    }
+    .prep-price { font-weight: 800; font-size: 14px; display: block; }
+    .prep-note { font-size: 11px; opacity: 0.72; margin-top: 3px; display: none; }
+    .prep-chip.on .prep-note { display: block; opacity: 0.85; }
+
+    .sub-section {
+      background: var(--blue-pale); border-radius: 12px; padding: 12px 14px;
+      margin-bottom: 10px; border: 1.5px solid rgba(33,118,199,.15);
+    }
+    .sub-label { font-size: 11px; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+    .door-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .door-type-label { flex: 1; font-size: 13px; font-weight: 600; color: var(--navy); }
+    .door-qty { width: 62px; border: 1.5px solid var(--border); border-radius: 9px; padding: 8px; font-size: 13px; text-align: center; background: #fff; outline: none; font-family: inherit; }
+    .door-color { width: 90px; border: 1.5px solid var(--border); border-radius: 9px; padding: 8px; font-size: 12px; background: #fff; outline: none; font-family: inherit; }
+
+    .item-row {
+      background: var(--surface); border-radius: 11px; padding: 11px 13px;
+      margin-bottom: 8px; border: 1.5px solid var(--border);
+    }
+    .item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .item-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--navy); }
+    .item-unit { font-size: 10px; color: var(--text-light); font-weight: 500; }
+    .item-name-input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; background: #fff; outline: none; font-family: inherit; }
+    .qty-input { width: 66px; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; text-align: center; background: #fff; outline: none; font-family: inherit; flex-shrink: 0; }
+    .note-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--text-mid); background: #fff; outline: none; font-family: inherit; }
+    .rm-btn { background: none; border: none; color: #c0ccd8; cursor: pointer; font-size: 18px; padding: 0 2px; flex-shrink: 0; }
+    .add-btn {
+      background: none; border: 1.5px dashed var(--border); border-radius: 10px;
+      padding: 9px 14px; color: var(--text-light); cursor: pointer; font-size: 13px;
+      margin-top: 4px; font-family: inherit; font-weight: 500; width: 100%; text-align: center;
+      transition: all 0.15s;
+    }
+    .add-btn:active { background: var(--blue-pale); }
+
+    .section-divider {
+      font-size: 10px; font-weight: 800; color: var(--blue); text-transform: uppercase;
+      letter-spacing: 0.1em; margin: 16px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1.5px;
+      background: linear-gradient(90deg, rgba(33,118,199,.3), transparent);
+    }
+    .section-divider::before { background: linear-gradient(90deg, transparent, rgba(33,118,199,.3)); }
+
+    .spec-box {
+      background: var(--blue-pale); border-radius: 12px; padding: 14px;
+      margin-top: 8px; border: 1.5px solid rgba(33,118,199,.2);
+    }
+    .spec-row { margin-bottom: 12px; }
+    .spec-row:last-child { margin-bottom: 0; }
+    .spec-options { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+    .notes-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .note-card {
+      background: var(--card); border-radius: 14px; padding: 14px;
+      box-shadow: 0 1px 6px rgba(15,39,68,.08); border: 1.5px solid var(--border);
+    }
+    .note-card-label { font-size: 11px; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .note-area { width: 100%; border: 1.5px solid var(--border); border-radius: 9px; padding: 10px; font-size: 13px; color: var(--text); background: var(--surface); resize: vertical; min-height: 90px; outline: none; font-family: inherit; }
+
+    #export-overlay { display: none; position: fixed; inset: 0; background: rgba(10,25,50,.65); z-index: 999; align-items: flex-end; justify-content: center; }
+    #export-overlay.open { display: flex; }
+    #export-modal { background: #fff; border-radius: 22px 22px 0 0; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-head {
+      padding: 18px 20px; display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      border-radius: 22px 22px 0 0;
+    }
+    .modal-head span { font-weight: 800; font-size: 16px; color: #fff; }
+    .modal-close { background: rgba(255,255,255,.15); border: none; font-size: 18px; color: #fff; cursor: pointer; border-radius: 8px; padding: 3px 10px; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+    .modal-foot { padding: 14px 20px; border-top: 1.5px solid var(--border); display: flex; justify-content: flex-end; }
+    .email-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+    .email-row .col { flex: 1; }
+    #btn-send-email {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+      border: none; border-radius: 10px; padding: 11px 16px; color: #fff; cursor: pointer;
+      font-size: 14px; font-weight: 800; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(46,158,82,.4);
+    }
+    #btn-copy {
+      width: 100%; background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      border: none; border-radius: 10px; padding: 13px; color: #fff; cursor: pointer;
+      font-size: 14px; font-weight: 800; margin-bottom: 12px; font-family: inherit;
+    }
+    #btn-copy.copied { background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%); }
+    #export-pre { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; font-size: 12px; line-height: 1.9; white-space: pre-wrap; color: var(--text-mid); font-family: monospace; }
+    .modal-cancel { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 24px; cursor: pointer; font-size: 14px; font-family: inherit; color: var(--text-mid); font-weight: 600; }
+
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .shake { animation: shake 0.4s ease; border-color: #ef4444 !important; background: #fef2f2 !important; }
+  </style>
+</head>
+<body>
+
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo-circle"><img id="logo-img" alt="BarrWood"></div>
+      <div class="brand">
+        <div class="brand-name">BarrWood Services</div>
+        <div class="brand-sub">Refurb Walk-Through</div>
+      </div>
+      <div class="header-btns">
+        <button id="btn-new">New</button>
+        <button id="btn-export">Export &rarr;</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-bar">
+    <span class="header-dot" id="header-dot"></span>
+    <span id="item-count"></span>
+  </div>
+</div>
+
+<div id="page"></div>
+
+<div id="export-overlay">
+  <div id="export-modal">
+    <div class="modal-head"><span>Walk-Through Summary</span><button class="modal-close" id="btn-close-export">&times;</button></div>
+    <div class="modal-body">
+      <div class="email-row">
+        <div class="col"><span class="field-label">Send to</span><input type="email" id="email-to" value="info@barrwoodservices.com"></div>
+        <button id="btn-send-email">Send Email</button>
+      </div>
+      <button id="btn-copy">Copy to clipboard</button>
+      <pre id="export-pre"></pre>
+    </div>
+    <div class="modal-foot"><button class="modal-cancel" id="btn-close-export2">Close</button></div>
+  </div>
+</div>
+
+<script>
+if (!Object.values) { Object.values = function(o) { return Object.keys(o).map(function(k){ return o[k]; }); }; }
+var LOGO_B64 = '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';
+document.getElementById('logo-img').src = 'data:image/jpeg;base64,' + LOGO_B64;
+
+function uid() { return Math.random().toString(36).slice(2,9); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+var job = { estimate:'', address:'', unit:'', date:new Date().toISOString().slice(0,10), length:'', width:'', paintColor:'Accessible Beige', interiorNotes:'', exteriorNotes:'' };
+var sectionData = { cleanout:[], painting:[], wallprep:[], flooring:[], doors:[], trim:[], piecework:[], exterior:[] };
+var doorSubs = { slab:{qty:'',color:'White',note:''}, sixPanel:{qty:'',color:'White',note:''}, twoPanel:{qty:'',color:'White',note:''} };
+var wallPrepSel = '';
+var comboDoor = { width:'38', height:'82', jamb:'4"', swing:'RH', note:'', active:false };
+var resDoor   = { width:'32', jamb:'4"', swing:'RH', note:'', active:false };
+var openSections = { jobinfo:true };
+
+var SECTIONS = [
+  { key:'jobinfo',   num:1, label:'Job Info',                   type:'jobinfo' },
+  { key:'cleanout',  num:2, label:'Clean Out / Demo',           items:[{n:'Demo / Clean Out'}] },
+  { key:'painting',  num:3, label:'Painting',                   type:'painting', items:[{n:'Walls'},{n:'Ceilings'},{n:'Interior Doors'},{n:'Door Jambs'},{n:'Window Jambs'},{n:'Cabinets'}] },
+  { key:'wallprep',  num:4, label:'Wall Prep & Ceiling Repair', type:'wallprep', items:[{n:'Small Patch'},{n:'Medium Patch'},{n:'Large Patch / Panel'},{n:'Ceiling Crack'},{n:'VOG Panel'},{n:'Ceiling Repair'}] },
+  { key:'flooring',  num:5, label:'Flooring',                   items:[{n:'Carpet'},{n:'Vinyl Plank (LVP)'},{n:'Luan'},{n:'Subfloor Repair'},{n:'Transition Bars',unit:'ft'},{n:'Shoe Molding',unit:'ft'}] },
+  { key:'doors',     num:6, label:'Doors & Hardware',           type:'doors',   items:[{n:'Door Knob / Lockset'},{n:'Door Hinges'}] },
+  { key:'trim',      num:7, label:'Trim, Cabinet & Countertop', items:[{n:'Casing'},{n:'Jambs'},{n:'Sills'},{n:'Door Stops'},{n:'Battens'},{n:'Crown Molding'},{n:'Base Boards',unit:'ft'},{n:'Edge Banding',unit:'ft'},{n:'Cabinet Repair'},{n:'Countertop Repair'},{n:'Cabinet Hardware'}] },
+  { key:'piecework', num:8, label:'Piece Work',                 type:'piecework', items:[
+      {n:'Smoke Alarm'},{n:'Switch'},{n:'Outlet'},{n:'Switch Cover'},{n:'Outlet Cover'},{n:'Floor Vent'},{n:'Mirror'},{n:'Light Fixture'},
+      {n:'__DIV__'},
+      {n:'Toilet Seat'},{n:'Bathroom Accessories'},{n:'Shower Head'},{n:'Plumbing Repair'},
+      {n:'Vanity Faucet'},{n:'Kitchen Faucet'},{n:'Mobile Home Tub Faucet'},{n:'Residential Shower Valve'},
+      {n:'Blinds'},{n:'Vertical Blinds'}
+  ]},
+  { key:'exterior',  num:9, label:'Exterior',                   type:'exterior', items:[
+      {n:'Residential Storm Door'},{n:'Mobile Home Storm Door'},{n:'Window Screen'},{n:'Vinyl Windows'},
+      {n:'Step / Deck Repair'},{n:'Siding Repairs'},{n:'Glass Replacement'},{n:'Exterior Lights'},
+      {n:'Stain Steps'},{n:'Underbelly Inspection'},{n:'Roof Check'},{n:'Skirting'}
+  ]},
+];
+
+var PREP_OPTS = [
+  { key:'minimal',   label:'Minimal',   price:'$250', note:'Light patching - small holes, minor surface prep.' },
+  { key:'standard',  label:'Standard',  price:'$500', note:'Moderate patching - several repairs, texture blending.' },
+  { key:'extensive', label:'Extensive', price:'$750', note:'Heavy damage - large patches, significant wall repair.' },
+];
+
+function render() {
+  var page = document.getElementById('page');
+  page.innerHTML = '';
+  SECTIONS.forEach(function(sec) { page.appendChild(makeCard(sec)); });
+  var nr = document.createElement('div'); nr.className = 'notes-row';
+  nr.innerHTML = '<div class="note-card"><div class="note-card-label">Interior Notes</div><textarea class="note-area" id="interior-notes" placeholder="Observations, special instructions..."></textarea></div>' +
+    '<div class="note-card"><div class="note-card-label">Exterior Notes</div><textarea class="note-area" id="exterior-notes" placeholder="Curb appeal, exterior items..."></textarea></div>';
+  page.appendChild(nr);
+  document.getElementById('interior-notes').value = job.interiorNotes;
+  document.getElementById('exterior-notes').value = job.exteriorNotes;
+  document.getElementById('interior-notes').addEventListener('input', function(e){ job.interiorNotes = e.target.value; });
+  document.getElementById('exterior-notes').addEventListener('input', function(e){ job.exteriorNotes = e.target.value; });
+  updateCount();
+}
+
+function makeCard(sec) {
+  var card = document.createElement('div'); card.className = 'card';
+  var isOpen = !!openSections[sec.key];
+  var head = document.createElement('button');
+  head.className = 'acc-head' + (isOpen ? ' open' : '');
+  head.innerHTML = '<span class="acc-num">' + sec.num + '</span><span class="acc-label">' + sec.label + '</span>' +
+    '<span class="acc-right"><span class="badge" id="badge-' + sec.key + '"></span><span class="chevron">' + (isOpen ? '&#9652;' : '&#9662;') + '</span></span>';
+  head.addEventListener('click', function(){ toggleSec(sec.key, card); });
+  card.appendChild(head);
+  var body = document.createElement('div');
+  body.className = 'acc-body' + (isOpen ? ' open' : ''); body.id = 'body-' + sec.key;
+  var sb = document.createElement('div'); sb.className = 'sec-body';
+  if      (sec.type === 'jobinfo')   sb.appendChild(makeJobInfo());
+  else if (sec.type === 'painting')  sb.appendChild(makePainting(sec));
+  else if (sec.type === 'wallprep')  sb.appendChild(makeWallPrep(sec));
+  else if (sec.type === 'doors')     sb.appendChild(makeDoors(sec));
+  else if (sec.type === 'piecework') sb.appendChild(makePiecework(sec));
+  else if (sec.type === 'exterior')  sb.appendChild(makeExterior(sec));
+  else                                sb.appendChild(makeGeneric(sec));
+  body.appendChild(sb); card.appendChild(body);
+  updateBadgeEl(sec.key);
+  return card;
+}
+
+function makeJobInfo() {
+  var wrap = document.createElement('div');
+  var sqft = (job.length && job.width) ? Math.round(parseFloat(job.length) * parseFloat(job.width)) : null;
+  wrap.innerHTML =
+    '<div style="margin-bottom:12px;">' +
+      '<span class="field-label">Estimate # <span style="color:#d97706">&#9733; Required to export</span></span>' +
+      '<input type="text" id="f-estimate" placeholder="e.g. 2024-087" value="' + esc(job.estimate) + '">' +
+      '<div class="est-required" id="est-warn">&#9888; Enter an estimate number before exporting</div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div class="col flex2"><span class="field-label">Address</span><input type="text" id="f-address" placeholder="123 Main St" value="' + esc(job.address) + '"></div>' +
+      '<div class="col"><span class="field-label">Unit #</span><input type="text" id="f-unit" placeholder="4B" value="' + esc(job.unit) + '"></div>' +
+    '</div>' +
+    '<div class="row"><div class="col"><span class="field-label">Date</span><input type="date" id="f-date" value="' + esc(job.date) + '"></div></div>' +
+    '<div class="row">' +
+      '<div class="col"><span class="field-label">Length (ft)</span><input type="number" inputmode="decimal" id="f-length" placeholder="0" value="' + esc(job.length) + '"></div>' +
+      '<div class="math-sym">&times;</div>' +
+      '<div class="col"><span class="field-label">Width (ft)</span><input type="number" inputmode="decimal" id="f-width" placeholder="0" value="' + esc(job.width) + '"></div>' +
+      '<div class="math-sym">=</div>' +
+      '<div class="col"><span class="field-label">Sq Ft</span><div class="' + (sqft ? 'sqft-display has-val' : 'sqft-display') + '" id="sqft-display">' + (sqft || '&mdash;') + '</div></div>' +
+    '</div>';
+  wrap.querySelector('#f-estimate').addEventListener('input', function(e){ job.estimate = e.target.value.trim(); document.getElementById('est-warn').classList.remove('show'); });
+  wrap.querySelector('#f-address').addEventListener('input', function(e){ job.address = e.target.value; updateCount(); });
+  wrap.querySelector('#f-unit').addEventListener('input', function(e){ job.unit = e.target.value; });
+  wrap.querySelector('#f-date').addEventListener('input', function(e){ job.date = e.target.value; });
+  wrap.querySelector('#f-length').addEventListener('input', function(e){ job.length = e.target.value; rerenderSqft(); });
+  wrap.querySelector('#f-width').addEventListener('input', function(e){ job.width = e.target.value; rerenderSqft(); });
+  return wrap;
+}
+function rerenderSqft() {
+  var sqft = (job.length && job.width) ? Math.round(parseFloat(job.length) * parseFloat(job.width)) : null;
+  var el = document.getElementById('sqft-display');
+  if (el) { el.textContent = sqft || '\u2014'; el.className = sqft ? 'sqft-display has-val' : 'sqft-display'; }
+}
+
+function makePainting(sec) {
+  var wrap = document.createElement('div');
+  var colorDiv = document.createElement('div'); colorDiv.style.marginBottom = '14px';
+  colorDiv.innerHTML = '<span class="field-label">Paint Color</span>';
+  var colorRow = document.createElement('div'); colorRow.style.cssText = 'display:flex;gap:8px;margin-top:7px;';
+  ['Accessible Beige','Agreeable Gray'].forEach(function(c) {
+    var btn = document.createElement('button'); btn.className = 'chip green-chip' + (job.paintColor === c ? ' on' : ''); btn.textContent = c;
+    btn.addEventListener('click', function() { job.paintColor = c; colorRow.querySelectorAll('.chip').forEach(function(b){ b.classList.toggle('on', b.textContent === c); }); });
+    colorRow.appendChild(btn);
+  });
+  colorDiv.appendChild(colorRow); wrap.appendChild(colorDiv);
+  wrap.appendChild(makeChipsAndRows(sec));
+  return wrap;
+}
+
+function makeWallPrep(sec) {
+  var wrap = document.createElement('div');
+  var prepDiv = document.createElement('div'); prepDiv.style.marginBottom = '14px';
+  prepDiv.innerHTML = '<span class="field-label">Wall Prep Level</span><div style="margin-top:8px;" id="prep-btns"></div>';
+  wrap.appendChild(prepDiv);
+  var btnWrap = prepDiv.querySelector('#prep-btns');
+  PREP_OPTS.forEach(function(opt) {
+    var btn = document.createElement('button'); btn.className = 'prep-chip' + (wallPrepSel === opt.key ? ' on' : '');
+    btn.innerHTML = '<span class="prep-price">' + opt.label + ' &mdash; ' + opt.price + '</span><span class="prep-note">' + opt.note + '</span>';
+    btn.addEventListener('click', function() {
+      wallPrepSel = wallPrepSel === opt.key ? '' : opt.key;
+      btnWrap.querySelectorAll('.prep-chip').forEach(function(b, i){ b.classList.toggle('on', PREP_OPTS[i].key === wallPrepSel); });
+      updateBadgeEl('wallprep'); updateCount();
+    });
+    btnWrap.appendChild(btn);
+  });
+  var div2 = document.createElement('div'); div2.className = 'section-divider'; div2.textContent = 'Additional Items';
+  wrap.appendChild(div2);
+  wrap.appendChild(makeChipsAndRows(sec));
+  return wrap;
+}
+
+function makeDoors(sec) {
+  var wrap = document.createElement('div');
+  var sub = document.createElement('div'); sub.className = 'sub-section';
+  sub.innerHTML = '<div class="sub-label">Interior Doors</div>';
+  [{key:'slab',label:'Slab'},{key:'sixPanel',label:'6 Panel'},{key:'twoPanel',label:'2 Panel'}].forEach(function(dtype) {
+    var row = document.createElement('div'); row.className = 'door-row';
+    var lbl = document.createElement('span'); lbl.className = 'door-type-label'; lbl.textContent = dtype.label;
+    var qty = document.createElement('input'); qty.type = 'number'; qty.inputMode = 'decimal'; qty.className = 'door-qty'; qty.placeholder = 'Qty'; qty.value = doorSubs[dtype.key].qty;
+    qty.addEventListener('input', function(e){ doorSubs[dtype.key].qty = e.target.value; updateBadgeEl('doors'); updateCount(); });
+    var color = document.createElement('select'); color.className = 'door-color';
+    ['White','Oak'].forEach(function(c){ var o = document.createElement('option'); o.value = c; o.textContent = c; if (doorSubs[dtype.key].color === c) o.selected = true; color.appendChild(o); });
+    color.addEventListener('change', function(e){ doorSubs[dtype.key].color = e.target.value; });
+    row.appendChild(lbl); row.appendChild(qty); row.appendChild(color); sub.appendChild(row);
+  });
+  var noteIn = document.createElement('input'); noteIn.type = 'text'; noteIn.className = 'note-input'; noteIn.style.marginTop = '4px'; noteIn.placeholder = 'Interior doors note (optional)'; noteIn.value = doorSubs.slab.note;
+  noteIn.addEventListener('input', function(e){ doorSubs.slab.note = e.target.value; });
+  sub.appendChild(noteIn); wrap.appendChild(sub);
+  var div2 = document.createElement('div'); div2.className = 'section-divider'; div2.textContent = 'Other Hardware';
+  wrap.appendChild(div2);
+  wrap.appendChild(makeChipsAndRows(sec));
+  return wrap;
+}
+
+function makeDoorSpecBox(state, isComboDoor) {
+  var box = document.createElement('div'); box.className = 'spec-box';
+  var rows = isComboDoor
+    ? [
+        {label:'Width (in)', opts:['32','34','36','38'], key:'width'},
+        {label:'Height (in)', opts:['80','82'], key:'height'},
+        {label:'Jamb Width', opts:['4"','6"'], key:'jamb'},
+        {label:'Swing', opts:['LH','RH','LH/RH','RH/LH'], key:'swing'},
+      ]
+    : [
+        {label:'Width (in)', opts:['32','36'], key:'width'},
+        {label:'Jamb Width', opts:['4"','6"'], key:'jamb'},
+        {label:'Swing', opts:['LH','RH'], key:'swing'},
+      ];
+  rows.forEach(function(row) {
+    var rowDiv = document.createElement('div'); rowDiv.className = 'spec-row';
+    rowDiv.innerHTML = '<span class="field-label">' + row.label + '</span>';
+    var optsDiv = document.createElement('div'); optsDiv.className = 'spec-options';
+    row.opts.forEach(function(opt) {
+      var btn = document.createElement('button'); btn.className = 'chip' + (state[row.key] === opt ? ' on' : ''); btn.textContent = opt;
+      btn.addEventListener('click', function() {
+        state[row.key] = opt;
+        optsDiv.querySelectorAll('.chip').forEach(function(b){ b.classList.toggle('on', b.textContent === opt); });
+      });
+      optsDiv.appendChild(btn);
+    });
+    rowDiv.appendChild(optsDiv); box.appendChild(rowDiv);
+  });
+  var noteIn = document.createElement('input'); noteIn.type = 'text'; noteIn.className = 'note-input'; noteIn.style.marginTop = '8px'; noteIn.placeholder = 'Note (optional)'; noteIn.value = state.note;
+  noteIn.addEventListener('input', function(e){ state.note = e.target.value; });
+  box.appendChild(noteIn);
+  return box;
+}
+
+function makeExterior(sec) {
+  var wrap = document.createElement('div');
+  wrap.appendChild(makeChipsAndRows(sec));
+
+  var d1 = document.createElement('div'); d1.className = 'section-divider'; d1.textContent = 'Door Combo';
+  wrap.appendChild(d1);
+  var comboToggle = document.createElement('button'); comboToggle.className = 'chip' + (comboDoor.active ? ' on' : ''); comboToggle.textContent = (comboDoor.active ? '\u2713 ' : '') + 'Door Combo';
+  var comboSpec = makeDoorSpecBox(comboDoor, true); comboSpec.style.display = comboDoor.active ? 'block' : 'none';
+  comboToggle.addEventListener('click', function() {
+    comboDoor.active = !comboDoor.active;
+    comboToggle.className = 'chip' + (comboDoor.active ? ' on' : ''); comboToggle.textContent = (comboDoor.active ? '\u2713 ' : '') + 'Door Combo';
+    comboSpec.style.display = comboDoor.active ? 'block' : 'none';
+    updateBadgeEl('exterior'); updateCount();
+  });
+  var cr = document.createElement('div'); cr.className = 'chip-row'; cr.appendChild(comboToggle); wrap.appendChild(cr); wrap.appendChild(comboSpec);
+
+  var d2 = document.createElement('div'); d2.className = 'section-divider'; d2.textContent = 'Residential Door';
+  wrap.appendChild(d2);
+  var resToggle = document.createElement('button'); resToggle.className = 'chip' + (resDoor.active ? ' on' : ''); resToggle.textContent = (resDoor.active ? '\u2713 ' : '') + 'Residential Door';
+  var resSpec = makeDoorSpecBox(resDoor, false); resSpec.style.display = resDoor.active ? 'block' : 'none';
+  resToggle.addEventListener('click', function() {
+    resDoor.active = !resDoor.active;
+    resToggle.className = 'chip' + (resDoor.active ? ' on' : ''); resToggle.textContent = (resDoor.active ? '\u2713 ' : '') + 'Residential Door';
+    resSpec.style.display = resDoor.active ? 'block' : 'none';
+    updateBadgeEl('exterior'); updateCount();
+  });
+  var rr = document.createElement('div'); rr.className = 'chip-row'; rr.appendChild(resToggle); wrap.appendChild(rr); wrap.appendChild(resSpec);
+  return wrap;
+}
+
+function makePiecework(sec) {
+  var wrap = document.createElement('div');
+  var divIdx = sec.items.findIndex(function(i){ return i.n === '__DIV__'; });
+  var sec1 = Object.assign({}, sec, {items: sec.items.slice(0, divIdx)});
+  var sec2 = Object.assign({}, sec, {items: sec.items.slice(divIdx + 1)});
+  wrap.appendChild(makeChipsAndRows(sec1));
+  var div = document.createElement('div'); div.className = 'section-divider'; div.textContent = 'Plumbing & Bathroom';
+  wrap.appendChild(div);
+  wrap.appendChild(makeChipsAndRows(sec2));
+  return wrap;
+}
+
+function makeGeneric(sec) {
+  var wrap = document.createElement('div'); wrap.appendChild(makeChipsAndRows(sec)); return wrap;
+}
+
+function makeChipsAndRows(sec) {
+  var wrap = document.createElement('div');
+  var rows = sectionData[sec.key] || [];
+  var chipRow = document.createElement('div'); chipRow.className = 'chip-row';
+  sec.items.filter(function(i){ return i.n !== '__DIV__'; }).forEach(function(item) {
+    var active = rows.some(function(r){ return r.name === item.n; });
+    var chip = document.createElement('button'); chip.className = 'chip' + (active ? ' on' : ''); chip.textContent = (active ? '\u2713 ' : '') + item.n;
+    chip.addEventListener('click', function(){ toggleItem(sec.key, item.n, item.unit || '', chipRow); });
+    chipRow.appendChild(chip);
+  });
+  wrap.appendChild(chipRow);
+  var ic = document.createElement('div');
+  rows.forEach(function(r){ ic.appendChild(makeItemRow(sec.key, r)); });
+  wrap.appendChild(ic);
+  var addBtn = document.createElement('button'); addBtn.className = 'add-btn'; addBtn.textContent = '+ Add item';
+  addBtn.addEventListener('click', function() {
+    var nr = {id:uid(), name:'', qty:'', unit:'', note:'', custom:true};
+    sectionData[sec.key].push(nr); ic.appendChild(makeItemRow(sec.key, nr)); updateBadgeEl(sec.key);
+  });
+  wrap.appendChild(addBtn);
+  return wrap;
+}
+
+function makeItemRow(key, row) {
+  var div = document.createElement('div'); div.className = 'item-row'; div.id = 'row-' + row.id;
+  var top = document.createElement('div'); top.className = 'item-top';
+  if (row.custom) {
+    var ni = document.createElement('input'); ni.type = 'text'; ni.className = 'item-name-input'; ni.placeholder = 'Item name'; ni.value = row.name;
+    ni.addEventListener('input', function(e){ row.name = e.target.value; }); top.appendChild(ni);
+  } else {
+    var ns = document.createElement('div'); ns.style.flex = '1';
+    ns.innerHTML = '<div class="item-name">' + row.name + '</div>' + (row.unit ? '<div class="item-unit">per ' + row.unit + '</div>' : '');
+    top.appendChild(ns);
+  }
+  var qi = document.createElement('input'); qi.type = 'number'; qi.inputMode = 'decimal'; qi.className = 'qty-input'; qi.placeholder = 'Qty'; qi.value = row.qty;
+  qi.addEventListener('input', function(e){ row.qty = e.target.value; }); top.appendChild(qi);
+  var rm = document.createElement('button'); rm.className = 'rm-btn'; rm.innerHTML = '&times;';
+  rm.addEventListener('click', function() {
+    sectionData[key] = sectionData[key].filter(function(r){ return r.id !== row.id; }); div.remove(); updateBadgeEl(key);
+    document.querySelectorAll('.chip').forEach(function(c){ if (c.textContent.replace('\u2713 ','') === row.name){ c.classList.remove('on'); c.textContent = row.name; } });
+  });
+  top.appendChild(rm); div.appendChild(top);
+  var ni2 = document.createElement('input'); ni2.type = 'text'; ni2.className = 'note-input'; ni2.placeholder = 'Note (optional)'; ni2.value = row.note;
+  ni2.addEventListener('input', function(e){ row.note = e.target.value; }); div.appendChild(ni2);
+  return div;
+}
+
+function toggleItem(key, name, unit, chipRow) {
+  var rows = sectionData[key];
+  var ex = rows.find(function(r){ return r.name === name; });
+  if (ex) {
+    sectionData[key] = rows.filter(function(r){ return r.id !== ex.id; });
+    var el = document.getElementById('row-' + ex.id); if (el) el.remove();
+  } else {
+    var nr = {id:uid(), name:name, qty:'', unit:unit, note:''};
+    sectionData[key].push(nr);
+    var ic = chipRow.nextElementSibling; if (ic) ic.appendChild(makeItemRow(key, nr));
+  }
+  chipRow.querySelectorAll('.chip').forEach(function(c) {
+    var lbl = c.textContent.replace('\u2713 ','');
+    if (lbl === name) { var on = sectionData[key].some(function(r){ return r.name === name; }); c.classList.toggle('on', on); c.textContent = (on ? '\u2713 ' : '') + name; }
+  });
+  updateBadgeEl(key); updateCount();
+}
+
+function toggleSec(key, card) {
+  openSections[key] = !openSections[key];
+  var body = document.getElementById('body-' + key) || card.querySelector('.acc-body');
+  var head = card.querySelector('.acc-head'); var chev = card.querySelector('.chevron');
+  if (body) body.classList.toggle('open', openSections[key]);
+  if (head) head.classList.toggle('open', openSections[key]);
+  if (chev) chev.innerHTML = openSections[key] ? '&#9652;' : '&#9662;';
+}
+
+function updateBadgeEl(key) {
+  var badge = document.getElementById('badge-' + key); if (!badge) return;
+  var count = (sectionData[key] || []).length;
+  if (key === 'doors') { count += ['slab','sixPanel','twoPanel'].filter(function(k){ return doorSubs[k].qty && parseInt(doorSubs[k].qty) > 0; }).length; }
+  if (key === 'wallprep' && wallPrepSel) count++;
+  if (key === 'exterior') { if (comboDoor.active) count++; if (resDoor.active) count++; }
+  badge.textContent = count; badge.style.display = count ? 'inline-block' : 'none';
+}
+
+function updateCount() {
+  var total = Object.values(sectionData).flat().length;
+  if (wallPrepSel) total++;
+  ['slab','sixPanel','twoPanel'].forEach(function(k){ if (doorSubs[k].qty && parseInt(doorSubs[k].qty) > 0) total++; });
+  if (comboDoor.active) total++; if (resDoor.active) total++;
+  var dot = document.getElementById('header-dot');
+  if (dot) dot.classList.toggle('on', total > 0);
+  document.getElementById('item-count').textContent = total > 0 ? total + ' item' + (total !== 1 ? 's' : '') + ' noted' : '';
+}
+
+function buildExportText() {
+  var sqft = (job.length && job.width) ? Math.round(parseFloat(job.length) * parseFloat(job.width)) : null;
+  var out = 'BARRWOOD SERVICES - REFURB WALK-THROUGH\n';
+  out += 'Estimate #: ' + job.estimate + '\n' + '-'.repeat(38) + '\n';
+  out += 'Address: ' + (job.address||'-') + '  |  Unit: ' + (job.unit||'-') + '\n';
+  out += 'Date: ' + (job.date||'-') + '\n';
+  if (sqft) out += 'Sq Ft: ' + sqft + ' (' + job.length + ' x ' + job.width + ')\n';
+  out += 'Paint Color: ' + job.paintColor + '\n\n';
+  SECTIONS.filter(function(s){ return s.key !== 'jobinfo'; }).forEach(function(sec) {
+    var lines = [];
+    if (sec.key === 'wallprep' && wallPrepSel) {
+      var opt = PREP_OPTS.find(function(o){ return o.key === wallPrepSel; });
+      if (opt) lines.push('  Wall Prep: ' + opt.label + ' (' + opt.price + ')');
+    }
+    if (sec.key === 'doors') {
+      [{key:'slab',label:'Slab'},{key:'sixPanel',label:'6 Panel'},{key:'twoPanel',label:'2 Panel'}].forEach(function(d) {
+        if (doorSubs[d.key].qty && parseInt(doorSubs[d.key].qty) > 0)
+          lines.push('  Interior Door (' + d.label + ')  x' + doorSubs[d.key].qty + '  ' + doorSubs[d.key].color + (doorSubs.slab.note ? '  - ' + doorSubs.slab.note : ''));
+      });
+    }
+    if (sec.key === 'exterior') {
+      if (comboDoor.active) lines.push('  Door Combo  ' + comboDoor.width + '" w x ' + comboDoor.height + '" h  Jamb: ' + comboDoor.jamb + '  Swing: ' + comboDoor.swing + (comboDoor.note ? '  - ' + comboDoor.note : ''));
+      if (resDoor.active)   lines.push('  Residential Door  ' + resDoor.width + '" wide  Jamb: ' + resDoor.jamb + '  Swing: ' + resDoor.swing + (resDoor.note ? '  - ' + resDoor.note : ''));
+    }
+    (sectionData[sec.key] || []).forEach(function(r) {
+      var l = '  ' + (r.name || '(unnamed)');
+      if (r.qty) l += '  x' + r.qty + (r.unit ? ' ' + r.unit : '');
+      if (r.note) l += '  - ' + r.note;
+      lines.push(l);
+    });
+    if (lines.length) { out += '-- ' + sec.label.toUpperCase() + ' --\n'; lines.forEach(function(l){ out += l + '\n'; }); out += '\n'; }
+  });
+  if (job.interiorNotes) out += 'INTERIOR NOTES:\n' + job.interiorNotes + '\n\n';
+  if (job.exteriorNotes) out += 'EXTERIOR NOTES:\n' + job.exteriorNotes + '\n';
+  return out;
+}
+
+function tryOpenExport() {
+  if (!job.estimate) {
+    openSections.jobinfo = true; render();
+    setTimeout(function() {
+      var f = document.getElementById('f-estimate'); var w = document.getElementById('est-warn');
+      if (f) { f.classList.add('shake'); f.focus(); setTimeout(function(){ f.classList.remove('shake'); }, 500); }
+      if (w) w.classList.add('show');
+    }, 50); return;
+  }
+  document.getElementById('export-pre').textContent = buildExportText();
+  document.getElementById('export-overlay').classList.add('open');
+}
+
+document.getElementById('btn-send-email').addEventListener('click', function() {
+  var to = document.getElementById('email-to').value.trim();
+  var subject = encodeURIComponent('Refurb Walk-Through - Est. #' + job.estimate + (job.address ? ' | ' + job.address : ''));
+  var body = encodeURIComponent(buildExportText());
+  window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+});
+document.getElementById('btn-copy').addEventListener('click', function() {
+  var text = buildExportText(); var btn = this;
+  var finish = function(){ btn.textContent = 'Copied!'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = 'Copy to clipboard'; btn.classList.remove('copied'); }, 2000); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(finish).catch(function(){ fallbackCopy(text, finish); });
+  else fallbackCopy(text, finish);
+});
+function fallbackCopy(text, cb) { var ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); cb(); }
+
+document.getElementById('btn-new').addEventListener('click', function() {
+  if (!confirm('Start a new walk-through? This will clear all current data.')) return;
+  job = {estimate:'', address:'', unit:'', date:new Date().toISOString().slice(0,10), length:'', width:'', paintColor:'Accessible Beige', interiorNotes:'', exteriorNotes:''};
+  sectionData = {cleanout:[], painting:[], wallprep:[], flooring:[], doors:[], trim:[], piecework:[], exterior:[]};
+  doorSubs = {slab:{qty:'',color:'White',note:''}, sixPanel:{qty:'',color:'White',note:''}, twoPanel:{qty:'',color:'White',note:''}};
+  wallPrepSel = '';
+  comboDoor = {width:'38', height:'82', jamb:'4"', swing:'RH', note:'', active:false};
+  resDoor   = {width:'32', jamb:'4"', swing:'RH', note:'', active:false};
+  openSections = {jobinfo:true}; render();
+});
+document.getElementById('btn-export').addEventListener('click', tryOpenExport);
+document.getElementById('btn-close-export').addEventListener('click', function(){ document.getElementById('export-overlay').classList.remove('open'); });
+document.getElementById('btn-close-export2').addEventListener('click', function(){ document.getElementById('export-overlay').classList.remove('open'); });
+document.getElementById('export-overlay').addEventListener('click', function(e){ if (e.target === document.getElementById('export-overlay')) document.getElementById('export-overlay').classList.remove('open'); });
+
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
