@@ -1233,6 +1233,7 @@ function tryOpenExport(){
     },50);return;
   }
   document.getElementById('export-pre').textContent=buildExportText();
+  document.getElementById('hcp-estimate-num').value=job.estimate;
   var eps=document.getElementById('export-photo-section');
   var epg=document.getElementById('export-photo-grid');
   if(photos.length){
