@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barrwood-walkthrough-v2';
+const CACHE_NAME = 'barrwood-walkthrough-v3';
 const FILES_TO_CACHE = [
   './index.html',
   './manifest.json',
@@ -28,8 +28,9 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request).then(function(response) {
+    fetch(event.request, { cache: 'no-store' }).then(function(response) {
       var clone = response.clone();
       caches.open(CACHE_NAME).then(function(cache) {
         cache.put(event.request, clone);
