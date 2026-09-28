@@ -271,7 +271,7 @@ var SECTIONS = [
       {n:'Ceiling Crack'},{n:'Ceiling Repair'}
   ]},
   { key:'flooring',  num:4, label:'Flooring', items:[
-      {n:'Carpet'},{n:'Vinyl Plank (LVP)'},{n:'Luan'},{n:'Subfloor Repair'},{n:'Transition Bars',unit:'ft'},{n:'Shoe Molding',unit:'ft'},{n:'Floor Vent',type:'floorvent'}
+      {n:'Carpet'},{n:'Vinyl Plank (LVP)'},{n:'Luan'},{n:'Subfloor Repair'},{n:'Kilz Floors',unit:'sq ft'},{n:'Transition Bars',unit:'ft'},{n:'Shoe Molding',unit:'ft'},{n:'Floor Vent',type:'floorvent'}
   ]},
   { key:'doors',     num:5, label:'Doors & Hardware',           type:'doors',   items:[{n:'Door Knob / Lockset'},{n:'Door Hinges'}] },
   { key:'trim',      num:6, label:'Trim, Cabinet & Countertop', items:[
@@ -616,6 +616,15 @@ function makeDoorSpecBox(state,isComboDoor,onRemove) {
     });
     rowDiv.appendChild(optsDiv);box.appendChild(rowDiv);
   });
+  if(isComboDoor){
+    var fRow=document.createElement('div');fRow.className='spec-row';
+    var fBtn=document.createElement('button');fBtn.className='chip'+(state.flush?' on':'');fBtn.textContent='Flush Mount Door';
+    var fSize=document.createElement('input');fSize.type='text';fSize.className='note-input';fSize.style.marginTop='8px';fSize.placeholder='Flush mount size (e.g. 36 x 80)';fSize.value=state.flushSize||'';
+    fSize.style.display=state.flush?'block':'none';
+    fBtn.addEventListener('click',function(){state.flush=!state.flush;fBtn.classList.toggle('on',state.flush);fSize.style.display=state.flush?'block':'none';hasProgress=true;});
+    fSize.addEventListener('input',function(e){state.flushSize=e.target.value;hasProgress=true;});
+    fRow.appendChild(fBtn);fRow.appendChild(fSize);box.appendChild(fRow);
+  }
   var noteIn=document.createElement('input');noteIn.type='text';noteIn.className='note-input';noteIn.style.marginTop='8px';noteIn.placeholder='Note (optional)';noteIn.value=state.note;
   noteIn.addEventListener('input',function(e){state.note=e.target.value;});
   box.appendChild(noteIn);return box;
@@ -1183,7 +1192,7 @@ function buildExportText(){
     }
     if(sec.key==='exterior'){
       comboDoors.forEach(function(d){
-        lines.push('  Door Combo  '+d.width+'" w x '+d.height+'" h  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
+        lines.push('  Door Combo  '+d.width+'" w x '+d.height+'" h  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.flush?'  Flush Mount'+(d.flushSize?': '+d.flushSize:''):'')+(d.note?'  - '+d.note:''));
       });
       resDoors.forEach(function(d){
         lines.push('  Residential Door  '+d.width+'" wide  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
