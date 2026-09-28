@@ -221,6 +221,7 @@
         <div class="col"><span class="field-label">Estimate #</span><input type="text" id="hcp-estimate-num" placeholder="e.g. 4521"></div>
         <button id="btn-send-hcp">Send to HCP</button>
       </div>
+      <div id="hcp-result" style="white-space:pre-wrap;font-size:13px;margin:-4px 0 12px;"></div>
       <button id="btn-copy">Copy to clipboard</button>
       <div id="export-photo-section" style="display:none;margin-bottom:12px;">
         <div class="field-label" style="margin-bottom:6px;">Attached Photos</div>
@@ -254,6 +255,7 @@ var wallPrepPrices = { minimal:'$250', standard:'$500', extensive:'$750' };
 var vogPanel = { qty:'' };
 var comboDoors = [];
 var resDoors   = [];
+var flushDoors = [];
 var openSections = { jobinfo:true };
 var hasProgress = false;
 var paintPrepTab = 'paint';
@@ -298,7 +300,7 @@ var SECTIONS = [
       {n:'__DIV__:Structural & Repairs'},
       {n:'Step / Deck Repair'},{n:'Stain Steps'},
       {n:'__DIV__:Windows & Glass'},
-      {n:'Window Screen'},{n:'Vinyl Windows'},{n:'Glass Replacement'},
+      {n:'Window Screen'},{n:'Re-screen'},{n:'Vinyl Windows'},{n:'Glass Replacement'},
       {n:'__DIV__:Exterior Finishing'},
       {n:'Skirting Repair'},{n:'Exterior Lights'},{n:'Siding Repair'},{n:'Shed Repair'},{n:'Shutters'},
       {n:'__DIV__:Inspection'},
@@ -616,15 +618,6 @@ function makeDoorSpecBox(state,isComboDoor,onRemove) {
     });
     rowDiv.appendChild(optsDiv);box.appendChild(rowDiv);
   });
-  if(isComboDoor){
-    var fRow=document.createElement('div');fRow.className='spec-row';
-    var fBtn=document.createElement('button');fBtn.className='chip'+(state.flush?' on':'');fBtn.textContent='Flush Mount Door';
-    var fSize=document.createElement('input');fSize.type='text';fSize.className='note-input';fSize.style.marginTop='8px';fSize.placeholder='Flush mount size (e.g. 36 x 80)';fSize.value=state.flushSize||'';
-    fSize.style.display=state.flush?'block':'none';
-    fBtn.addEventListener('click',function(){state.flush=!state.flush;fBtn.classList.toggle('on',state.flush);fSize.style.display=state.flush?'block':'none';hasProgress=true;});
-    fSize.addEventListener('input',function(e){state.flushSize=e.target.value;hasProgress=true;});
-    fRow.appendChild(fBtn);fRow.appendChild(fSize);box.appendChild(fRow);
-  }
   var noteIn=document.createElement('input');noteIn.type='text';noteIn.className='note-input';noteIn.style.marginTop='8px';noteIn.placeholder='Note (optional)';noteIn.value=state.note;
   noteIn.addEventListener('input',function(e){state.note=e.target.value;});
   box.appendChild(noteIn);return box;
@@ -684,6 +677,31 @@ function makeExterior(sec) {
         renderResList();updateBadgeEl('exterior');updateCount();hasProgress=true;
       });
       wrap.appendChild(addResBtn);
+
+      var flushLabel=document.createElement('div');flushLabel.className='sub-label';flushLabel.style.marginTop='14px';flushLabel.textContent='Flush Mount Door';wrap.appendChild(flushLabel);
+      var flushListDiv=document.createElement('div');
+      function renderFlushList(){
+        flushListDiv.innerHTML='';
+        flushDoors.forEach(function(entry,idx){
+          var box=document.createElement('div');box.className='spec-box';box.style.position='relative';box.style.marginBottom='10px';
+          var rm=document.createElement('button');rm.innerHTML='&times;';rm.className='rm-btn';rm.style.cssText='position:absolute;top:6px;right:6px;';
+          rm.addEventListener('click',function(){flushDoors.splice(idx,1);renderFlushList();updateBadgeEl('exterior');updateCount();});
+          box.appendChild(rm);
+          var lbl=document.createElement('span');lbl.className='field-label';lbl.textContent='Size';box.appendChild(lbl);
+          var sz=document.createElement('input');sz.type='text';sz.className='note-input';sz.style.marginTop='6px';sz.placeholder='e.g. 36 x 80';sz.value=entry.size;
+          sz.addEventListener('input',function(e){entry.size=e.target.value;hasProgress=true;});
+          var nt=document.createElement('input');nt.type='text';nt.className='note-input';nt.style.marginTop='8px';nt.placeholder='Note (optional)';nt.value=entry.note;
+          nt.addEventListener('input',function(e){entry.note=e.target.value;});
+          box.appendChild(sz);box.appendChild(nt);flushListDiv.appendChild(box);
+        });
+      }
+      renderFlushList();wrap.appendChild(flushListDiv);
+      var addFlushBtn=document.createElement('button');addFlushBtn.className='add-btn';addFlushBtn.textContent='+ Add Flush Mount Door';
+      addFlushBtn.addEventListener('click',function(){
+        flushDoors.push({size:'',note:''});
+        renderFlushList();updateBadgeEl('exterior');updateCount();hasProgress=true;
+      });
+      wrap.appendChild(addFlushBtn);
 
       var d2=document.createElement('div');d2.style.marginTop='14px';wrap.appendChild(d2);
       wrap.appendChild(makeChipsAndRows({key:sec.key,items:restItems}));
@@ -1150,7 +1168,7 @@ function updateBadgeEl(key){
   if(key==='paintprep'){count=(sectionData.painting||[]).length+(sectionData.ceilingrepair||[]).length;if(wallPrepSel)count++;if(vogPanel.qty&&parseInt(vogPanel.qty)>0)count++;}
   else count=(sectionData[key]||[]).length;
   if(key==='doors'){var hasDoorQty=doorType.selected&&doorType.sizes.some(function(s){return s.qty&&parseInt(s.qty)>0;});if(hasDoorQty)count++;}
-  if(key==='exterior'){count+=comboDoors.length+resDoors.length;}
+  if(key==='exterior'){count+=comboDoors.length+resDoors.length+flushDoors.length;}
   badge.textContent=count;badge.style.display=count?'inline-block':'none';
 }
 
@@ -1159,7 +1177,7 @@ function updateCount(){
   if(wallPrepSel)total++;
   if(vogPanel.qty&&parseInt(vogPanel.qty)>0)total++;
   if(doorType.selected&&doorType.sizes.some(function(s){return s.qty&&parseInt(s.qty)>0;}))total++;
-  total+=comboDoors.length+resDoors.length;
+  total+=comboDoors.length+resDoors.length+flushDoors.length;
   var dot=document.getElementById('header-dot');if(dot)dot.classList.toggle('on',total>0);
   document.getElementById('item-count').textContent=total>0?total+' item'+(total!==1?'s':'')+' noted':'';
 }
@@ -1192,10 +1210,13 @@ function buildExportText(){
     }
     if(sec.key==='exterior'){
       comboDoors.forEach(function(d){
-        lines.push('  Door Combo  '+d.width+'" w x '+d.height+'" h  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.flush?'  Flush Mount'+(d.flushSize?': '+d.flushSize:''):'')+(d.note?'  - '+d.note:''));
+        lines.push('  Door Combo  '+d.width+'" w x '+d.height+'" h  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
       });
       resDoors.forEach(function(d){
         lines.push('  Residential Door  '+d.width+'" wide  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
+      });
+      flushDoors.forEach(function(d){
+        lines.push('  Flush Mount Door'+(d.size?'  '+d.size:'')+(d.note?'  - '+d.note:''));
       });
     }
     var exportRows = sec.key==='paintprep' ? (sectionData.painting||[]).concat(sectionData.ceilingrepair||[]) : (sectionData[sec.key]||[]);
@@ -1243,6 +1264,7 @@ function tryOpenExport(){
   }
   document.getElementById('export-pre').textContent=buildExportText();
   document.getElementById('hcp-estimate-num').value=job.estimate;
+  document.getElementById('hcp-result').textContent='';
   var eps=document.getElementById('export-photo-section');
   var epg=document.getElementById('export-photo-grid');
   if(photos.length){
@@ -1260,24 +1282,109 @@ document.getElementById('btn-send-email').addEventListener('click',function(){
 });
 var HCP_WORKER_URL = 'https://curly-unit-149a.dave-366.workers.dev';
 
+// ── Line items for the HCP estimate ────────────────────────────────────────────
+// Each entry: item + option match the price map in the Worker. qty, detail
+// (extra description text) and an optional price override in dollars.
+function numVal(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+function dollars(s){ var m=String(s||'').replace(/,/g,'').match(/\$\s*(\d+(\.\d+)?)/)||String(s||'').replace(/,/g,'').match(/^\s*(\d+(\.\d+)?)\s*$/); return m?parseFloat(m[1]):null; }
+function detailOf(r,st,skip){
+  var bits=[];
+  skip=skip||{};
+  if(st.coats&&!skip.coats)bits.push(st.coats);
+  if(st.finish)bits.push(st.finish);
+  if(st.knobtype)bits.push(st.knobtype);
+  if(st.color)bits.push(st.color);
+  if(st.tsshape)bits.push(st.tsshape);
+  if(st.drain)bits.push(st.drain+' Drain');
+  if(st.size&&!skip.size)bits.push(st.size);
+  if(r.note)bits.push(r.note);
+  return bits.join(' | ');
+}
+function buildLineItems(){
+  var out=[];
+  function add(item,option,qty,detail,price){ out.push({item:item,option:option||'',qty:qty,detail:detail||'',price:(price===undefined?null:price)}); }
+
+  if(wallPrepSel){
+    var opt=PREP_OPTS.find(function(o){return o.key===wallPrepSel;});
+    add('Wall Prep',opt.label,1,'',dollars(wallPrepPrices[wallPrepSel]));
+  }
+  if(numVal(vogPanel.qty)>0) add('VOG Panel Qty','',numVal(vogPanel.qty));
+
+  if(doorType.selected){
+    var dLabel=DOOR_TYPE_LABELS[doorType.selected];
+    doorType.sizes.forEach(function(s){
+      if(numVal(s.qty)>0) add('Interior Door',dLabel,numVal(s.qty),[s.size,doorType.color,doorType.note].filter(Boolean).join(' | '));
+    });
+  }
+
+  var keys=['cleanout','painting','ceilingrepair','flooring','doors','trim','piecework','exterior'];
+  keys.forEach(function(k){
+    (sectionData[k]||[]).forEach(function(r){
+      var st=getSubState(r.id);
+      var q=numVal(r.qty);
+      var name=r.name;
+      if(!name) return;
+      if(r.custom){ add(name,'',q||1,r.note); return; }
+      if(name==='Walls'||name==='Interior Doors'){ add(name,st.coats||'1 Coat',q||1,detailOf(r,st,{coats:true})); return; }
+      if(name==='Cabinets'){
+        Object.keys(st.cabtypes||{}).forEach(function(c){ if(st.cabtypes[c]) add('Cabinets',c,numVal((st.cabqty||{})[c])||1,detailOf(r,st)); });
+        return;
+      }
+      if(name==='Ceiling Crack'){ add(name,'',q||1,r.note,dollars(r.note)); return; }
+      if(name==='Floor Vent'){ add(name,(st.size&&st.size.indexOf('Perimeter')>-1)?'15" / 18" Perimeter':'4x10',q||1,detailOf(r,st)); return; }
+      if(name==='Blinds'){
+        (st.sizes||[]).forEach(function(s){
+          if(numVal(s.qty)<=0) return;
+          var w=parseInt(String(s.size).replace(/[^0-9]/g,''),10);
+          var o=(w===29||w===35||w===45)?(w+'"'):'Any other size';
+          add('Blinds',o,numVal(s.qty),[s.size,r.note].filter(Boolean).join(' | '));
+        });
+        return;
+      }
+      if(name==='Smoke Alarm'||name==='Light Fixtures'){
+        Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
+        return;
+      }
+      if(name==='Light Bulbs'){
+        var bq=0; Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]) bq+=numVal((st.typeqty||{})[t]); });
+        add(name,'Light / Vanity Bulbs',bq||1,r.note); return;
+      }
+      if(name==='Vanity'||name==='Tub and Surround'){ add(name,st.size||'',q||1,detailOf(r,st,{size:true})); return; }
+      if(name==='Door Hinges'){ add(name,'',Math.ceil((q||2)/2),detailOf(r,st)); return; }
+      add(name,'',q||1,detailOf(r,st));
+    });
+  });
+
+  comboDoors.forEach(function(d){ add('Door Combo','',1,d.width+'" x '+d.height+'" | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
+  resDoors.forEach(function(d){ add('Residential Door','',1,d.width+'" wide | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
+  flushDoors.forEach(function(d){ add('Flush Mount Door','',1,[d.size,d.note].filter(Boolean).join(' | ')); });
+  return out;
+}
+
 document.getElementById('btn-send-hcp').addEventListener('click',function(){
   var btn=this;
   var estimateNum=document.getElementById('hcp-estimate-num').value.trim();
   if(!estimateNum){ alert('Enter an estimate number first.'); return; }
   var text=buildExportText();
   btn.disabled=true;btn.classList.remove('sent','failed');btn.textContent='Sending...';
-  fetch(HCP_WORKER_URL+'/send-note',{
+  fetch(HCP_WORKER_URL+'/send-walkthrough',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({estimate_number:estimateNum,content:text})
+    body:JSON.stringify({estimate_number:estimateNum,content:text,items:buildLineItems()})
   }).then(function(res){return res.json().then(function(data){return {ok:res.ok,data:data};});})
     .then(function(result){
       btn.disabled=false;
       if(result.ok && result.data.success){
         btn.classList.add('sent');btn.textContent='Sent!';
+        var d=result.data, msg='Notes sent to estimate #'+estimateNum+'.';
+        if(d.line_items) msg+='\n'+d.line_items+' line items added ($'+Number(d.total||0).toFixed(2)+').';
+        if(d.pricing) msg+='\n'+d.pricing;
+        if(d.unmatched&&d.unmatched.length) msg+='\n\nAdded at $0 (not in price map): '+d.unmatched.join(', ');
+        document.getElementById('hcp-result').textContent=msg;
         setTimeout(function(){btn.classList.remove('sent');btn.textContent='Send to HCP';},2500);
       } else {
         btn.classList.add('failed');btn.textContent='Failed';
+        document.getElementById('hcp-result').textContent='Could not send to HCP: '+(result.data.error||'Unknown error');
         alert('Could not send to HCP: '+(result.data.error||'Unknown error'));
         setTimeout(function(){btn.classList.remove('failed');btn.textContent='Send to HCP';},2500);
       }
@@ -1305,6 +1412,7 @@ document.getElementById('btn-new').addEventListener('click',function(){
   wallPrepSel='';wallPrepPrices={minimal:'$250',standard:'$500',extensive:'$750'};vogPanel={qty:''};
   comboDoors=[];
   resDoors=[];
+  flushDoors=[];
   itemSubState={};photos=[];openSections={jobinfo:true};hasProgress=false;render();
 });
 document.getElementById('btn-export').addEventListener('click',tryOpenExport);
