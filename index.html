@@ -105,6 +105,8 @@
     .item-unit { font-size: 10px; color: var(--text-light); font-weight: 500; }
     .item-name-input { flex: 1; border: 2px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; background: #14304a; color: var(--text); outline: none; font-family: inherit; }
     .qty-input { width: 66px; border: 2px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; text-align: center; background: #14304a; color: var(--text); outline: none; font-family: inherit; flex-shrink: 0; }
+    textarea.note-input, textarea.grow { resize: none; overflow: hidden; display: block; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
+    textarea.grow { border: 2.5px solid var(--border); border-radius: 10px; padding: 11px 12px; font-size: 14px; color: var(--text); background: #1b3e5c; outline: none; width: 100%; font-family: inherit; }
     .note-input { width: 100%; border: 2px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--text-mid); background: #14304a; outline: none; font-family: inherit; }
     .rm-btn { background: none; border: none; color: #2a4a6a; cursor: pointer; font-size: 20px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
     .add-btn { background: #14304a; border: 2px dashed var(--border); border-radius: 10px; padding: 9px 14px; color: var(--text-light); cursor: pointer; font-size: 13px; margin-top: 4px; font-family: inherit; font-weight: 500; width: 100%; text-align: center; }
@@ -248,7 +250,12 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 var job = { estimate:'', address:'', unit:'', date:new Date().toISOString().slice(0,10), length:'', width:'', paintColor:'Natural Tan', interiorNotes:'', exteriorNotes:'' };
 var photos = [];
 var sectionData = { cleanout:[], painting:[], ceilingrepair:[], flooring:[], doors:[], trim:[], piecework:[], exterior:[] };
+// ── Auto-growing text fields (wrap + expand as you type) ─────────────────────
+function autoGrow(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function mkNote(){ var t=document.createElement('textarea'); t.className='note-input'; t.rows=1; setTimeout(function(){autoGrow(t);},0); return t; }
+document.addEventListener('input',function(e){ var t=e.target; if(t.tagName==='TEXTAREA'&&(t.classList.contains('note-input')||t.classList.contains('grow'))) autoGrow(t); });
 var doorType = { selected:'', color:'White', sizes:[{size:'',qty:''}], note:'' };
+var BLIND_PRESETS = ['29','32','35','45'];
 var DOOR_TYPE_LABELS = { slab:'Slab', sixPanel:'6 Panel', twoPanel:'2 Panel' };
 var wallPrepSel = '';
 var wallPrepPrices = { minimal:'$250', standard:'$500', extensive:'$750' };
@@ -275,9 +282,9 @@ var SECTIONS = [
   { key:'flooring',  num:4, label:'Flooring', items:[
       {n:'Carpet'},{n:'Vinyl Plank (LVP)'},{n:'Luan'},{n:'Subfloor Repair'},{n:'Kilz Floors',unit:'sq ft'},{n:'Transition Bars',unit:'ft'},{n:'Shoe Molding',unit:'ft'},{n:'Floor Vent',type:'floorvent'}
   ]},
-  { key:'doors',     num:5, label:'Doors & Hardware',           type:'doors',   items:[{n:'Door Knob / Lockset'},{n:'Door Hinges'}] },
+  { key:'doors',     num:5, label:'Doors & Hardware',           type:'doors',   items:[{n:'Door Knob / Lockset'},{n:'Door Hinges'},{n:'Bi-Fold Door'}] },
   { key:'trim',      num:6, label:'Trim, Cabinet & Countertop', items:[
-      {n:'Casing'},{n:'Jambs'},{n:'Door Stops'},{n:'Battens'},{n:'Edge Banding',unit:'ft'},
+      {n:'Casing'},{n:'Jambs'},{n:'Door Stops'},{n:'Battens'},{n:'Edge Banding',unit:'ft'},{n:'Misc Trim Repair'},
       {n:'__DIV__:Cabinets & Countertops'},
       {n:'Cabinet Repair'},{n:'Cabinet Knob'},{n:'Cabinet Hinge'},{n:'Countertops',unit:'lin ft'},{n:'Countertop Resurfacing'},
       {n:'__DIV__:Window Treatments'},
@@ -287,9 +294,9 @@ var SECTIONS = [
       {n:'__DIV__:Lighting & Electrical'},
       {n:'Smoke Alarm'},{n:'Smoke Alarm Batteries'},{n:'CO Detector'},{n:'Light Fixtures'},{n:'Light Bulbs'},{n:'Switch Cover'},{n:'Outlet Cover'},
       {n:'__DIV__:Plumbing - Kitchen'},
-      {n:'Plumbing Repair'},{n:'Kitchen Faucet'},{n:'Kitchen Sink'},{n:'Garbage Disposal'},{n:'Metal Sink Flange'},{n:'Hood Fan'},
+      {n:'Plumbing Repair'},{n:'Kitchen Faucet'},{n:'Kitchen Shelf'},{n:'Kitchen Sink'},{n:'Garbage Disposal'},{n:'Metal Sink Flange'},{n:'Hood Fan'},
       {n:'__DIV__:Plumbing - Bath'},
-      {n:'Toilet Seat',type:'toiletseat'},{n:'Shower Head'},{n:'Vanity Faucet'},{n:'Vanity'},{n:'Tub and Surround'},{n:'Shower Door'},
+      {n:'Toilet Seat',type:'toiletseat'},{n:'Shower Head'},{n:'Vanity Faucet'},{n:'Vanity'},{n:'Tub and Surround'},{n:'Tub Surround'},{n:'Shower Door'},
       {n:'New Toilet'},{n:'Toilet Rebuild'},{n:'Mobile Home Tub Faucet'},{n:'Residential Shower Valve'},
       {n:'Vanity Sink'},{n:'MH Bath Fan'},
       {n:'Towel Bar'},{n:'Toilet Paper Holder'},{n:'Towel Holder'},{n:'Mirror'}
@@ -419,7 +426,7 @@ function makeJobInfo() {
       '<div class="est-required" id="est-warn">&#9888; Enter an estimate number before exporting</div>' +
     '</div>' +
     '<div class="row">' +
-      '<div class="col flex2"><span class="field-label">Address</span><input type="text" id="f-address" placeholder="123 Main St" value="' + esc(job.address) + '"></div>' +
+      '<div class="col flex2"><span class="field-label">Address</span><textarea class="grow" id="f-address" rows="1" placeholder="123 Main St">' + esc(job.address) + '</textarea></div>' +
       '<div class="col"><span class="field-label">Unit #</span><input type="text" id="f-unit" placeholder="4B" value="' + esc(job.unit) + '"></div>' +
     '</div>' +
     '<div class="row"><div class="col"><span class="field-label">Date</span><input type="date" id="f-date" value="' + esc(job.date) + '"></div></div>' +
@@ -431,6 +438,7 @@ function makeJobInfo() {
       '<div class="col"><span class="field-label">Sq Ft</span><div class="' + (sqft ? 'sqft-display has-val' : 'sqft-display') + '" id="sqft-display">' + (sqft || '&mdash;') + '</div></div>' +
     '</div>';
   wrap.querySelector('#f-estimate').addEventListener('input', function(e){ job.estimate=e.target.value.trim(); hasProgress=true; document.getElementById('est-warn').classList.remove('show'); });
+  setTimeout(function(){var a=document.getElementById('f-address');if(a)autoGrow(a);},0);
   wrap.querySelector('#f-address').addEventListener('input', function(e){ job.address=e.target.value; hasProgress=true; updateCount(); });
   wrap.querySelector('#f-unit').addEventListener('input', function(e){ job.unit=e.target.value; hasProgress=true; });
   wrap.querySelector('#f-date').addEventListener('input', function(e){ job.date=e.target.value; });
@@ -587,7 +595,7 @@ function makeDoors(sec) {
   addSizeBtn.addEventListener('click',function(){doorType.sizes.push({size:'',qty:''});renderSizes();});
   sub.appendChild(addSizeBtn);
 
-  var noteIn=document.createElement('input');noteIn.type='text';noteIn.className='note-input';noteIn.style.marginTop='8px';noteIn.placeholder='Interior doors note (optional)';noteIn.value=doorType.note;
+  var noteIn=mkNote();noteIn.style.marginTop='8px';noteIn.placeholder='Interior doors note (optional)';noteIn.value=doorType.note;
   noteIn.addEventListener('input',function(e){doorType.note=e.target.value;});
   sub.appendChild(noteIn);wrap.appendChild(sub);
 
@@ -618,7 +626,7 @@ function makeDoorSpecBox(state,isComboDoor,onRemove) {
     });
     rowDiv.appendChild(optsDiv);box.appendChild(rowDiv);
   });
-  var noteIn=document.createElement('input');noteIn.type='text';noteIn.className='note-input';noteIn.style.marginTop='8px';noteIn.placeholder='Note (optional)';noteIn.value=state.note;
+  var noteIn=mkNote();noteIn.style.marginTop='8px';noteIn.placeholder='Note (optional)';noteIn.value=state.note;
   noteIn.addEventListener('input',function(e){state.note=e.target.value;});
   box.appendChild(noteIn);return box;
 }
@@ -690,7 +698,7 @@ function makeExterior(sec) {
           var lbl=document.createElement('span');lbl.className='field-label';lbl.textContent='Size';box.appendChild(lbl);
           var sz=document.createElement('input');sz.type='text';sz.className='note-input';sz.style.marginTop='6px';sz.placeholder='e.g. 36 x 80';sz.value=entry.size;
           sz.addEventListener('input',function(e){entry.size=e.target.value;hasProgress=true;});
-          var nt=document.createElement('input');nt.type='text';nt.className='note-input';nt.style.marginTop='8px';nt.placeholder='Note (optional)';nt.value=entry.note;
+          var nt=mkNote();nt.style.marginTop='8px';nt.placeholder='Note (optional)';nt.value=entry.note;
           nt.addEventListener('input',function(e){entry.note=e.target.value;});
           box.appendChild(sz);box.appendChild(nt);flushListDiv.appendChild(box);
         });
@@ -789,7 +797,7 @@ function makeItemRow(key,row) {
     top.appendChild(ns);
   }
   // qty — for sqft items auto-populate (Cabinets, Carpet, LVP, Blinds, Smoke Alarm, Light Fixtures, Light Bulbs use their own qty UI instead)
-  if(row.name!=='Cabinets'&&row.name!=='Carpet'&&row.name!=='Vinyl Plank (LVP)'&&row.name!=='Blinds'&&row.name!=='Smoke Alarm'&&row.name!=='Light Fixtures'&&row.name!=='Light Bulbs'){
+  if(row.name!=='Cabinets'&&row.name!=='Carpet'&&row.name!=='Vinyl Plank (LVP)'&&row.name!=='Blinds'&&row.name!=='Smoke Alarm'&&row.name!=='Bi-Fold Door'&&row.name!=='Light Fixtures'&&row.name!=='Light Bulbs'){
   var qi=document.createElement('input');qi.type='number';qi.inputMode='decimal';qi.className='qty-input';qi.placeholder='Qty';qi.value=row.qty;
   if(row.sqft){
     qi.className='qty-input sqft-auto-qty';qi.dataset.rowid=row.id;qi.dataset.autoset=row.qty?'false':'true';
@@ -808,7 +816,7 @@ function makeItemRow(key,row) {
   top.appendChild(rm);div.appendChild(top);
   // sub-options for special items
   var sub=makeSubOptions(row);if(sub)div.appendChild(sub);
-  var ni2=document.createElement('input');ni2.type='text';ni2.className='note-input';ni2.placeholder='Note (optional)';ni2.value=row.note;
+  var ni2=mkNote();ni2.placeholder='Note (optional)';ni2.value=row.note;
   ni2.addEventListener('input',function(e){row.note=e.target.value;});div.appendChild(ni2);
   return div;
 }
@@ -848,6 +856,27 @@ function makeSubOptions(row) {
       opts.appendChild(b);
     });
     box.appendChild(opts);return box;
+  }
+  if(row.name==='Bi-Fold Door'){
+    if(!st.types)st.types={};
+    if(!st.typeqty)st.typeqty={};
+    var box=document.createElement('div');box.className='sub-options';
+    box.innerHTML='<span class="field-label">Sizes</span>';
+    ['24"','30"','36"','48"','60"','72"'].forEach(function(t){
+      var r2=document.createElement('div');r2.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px;';
+      var b=document.createElement('button');b.className='chip'+(st.types[t]?' on':'');b.textContent=t;b.style.cssText='font-size:12px;min-width:56px;';
+      var qtyIn=document.createElement('input');qtyIn.type='number';qtyIn.inputMode='decimal';qtyIn.className='qty-input';qtyIn.placeholder='Qty';qtyIn.style.display=st.types[t]?'block':'none';qtyIn.value=st.typeqty[t]||'';
+      qtyIn.addEventListener('input',function(e){st.typeqty[t]=e.target.value;hasProgress=true;});
+      b.addEventListener('click',function(){
+        st.types[t]=!st.types[t];
+        b.classList.toggle('on',st.types[t]);
+        qtyIn.style.display=st.types[t]?'block':'none';
+        if(st.types[t]&&!st.typeqty[t]){st.typeqty[t]='1';qtyIn.value='1';}
+        hasProgress=true;
+      });
+      r2.appendChild(b);r2.appendChild(qtyIn);box.appendChild(r2);
+    });
+    return box;
   }
   if(row.name==='Smoke Alarm'){
     if(!st.types)st.types={};
@@ -910,24 +939,52 @@ function makeSubOptions(row) {
     box.appendChild(list);return box;
   }
   if(row.name==='Blinds'){
+    if(!st.btype)st.btype='1"';
+    if(!st.preset)st.preset={};
     if(!st.sizes||!st.sizes.length)st.sizes=[{qty:'',size:''}];
     var box=document.createElement('div');box.className='sub-options';
-    box.innerHTML='<span class="field-label">Sizes</span>';
-    var listDiv=document.createElement('div');
-
     function calcBlindsTotal(){
       var total=0;
+      BLIND_PRESETS.forEach(function(p){ total += parseInt(st.preset[p])||0; });
       st.sizes.forEach(function(s){ total += parseInt(s.qty)||0; });
       row.qty = total ? String(total) : '';
     }
-
+    // 1" / 2" toggle
+    var tl=document.createElement('span');tl.className='field-label';tl.textContent='Blind Type';box.appendChild(tl);
+    var typeRow=document.createElement('div');typeRow.className='chip-row';typeRow.style.marginBottom='8px';
+    ['1"','2"'].forEach(function(t){
+      var b=document.createElement('button');b.className='chip'+(st.btype===t?' on':'');b.textContent=t+' Blinds';b.style.fontSize='12px';
+      b.addEventListener('click',function(){st.btype=t;typeRow.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.textContent===t+' Blinds');});hasProgress=true;});
+      typeRow.appendChild(b);
+    });
+    box.appendChild(typeRow);
+    // preset sizes: tap a size, enter qty
+    var pl=document.createElement('span');pl.className='field-label';pl.textContent='Sizes';box.appendChild(pl);
+    BLIND_PRESETS.forEach(function(p){
+      var r2=document.createElement('div');r2.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px;';
+      var on=!!st.preset[p];
+      var b=document.createElement('button');b.className='chip'+(on?' on':'');b.textContent=p+'"';b.style.cssText='font-size:12px;min-width:56px;';
+      var q=document.createElement('input');q.type='number';q.inputMode='decimal';q.className='qty-input';q.placeholder='Qty';q.value=st.preset[p]||'';q.style.display=on?'block':'none';
+      q.addEventListener('input',function(e){st.preset[p]=e.target.value;calcBlindsTotal();hasProgress=true;});
+      b.addEventListener('click',function(){
+        var nowOn=q.style.display==='none';
+        q.style.display=nowOn?'block':'none';b.classList.toggle('on',nowOn);
+        if(nowOn){ if(!st.preset[p]){st.preset[p]='1';q.value='1';} q.focus(); }
+        else { st.preset[p]='';q.value=''; }
+        calcBlindsTotal();hasProgress=true;
+      });
+      r2.appendChild(b);r2.appendChild(q);box.appendChild(r2);
+    });
+    // custom sizes
+    var cl=document.createElement('span');cl.className='field-label';cl.textContent='Custom Sizes';cl.style.marginTop='10px';box.appendChild(cl);
+    var listDiv=document.createElement('div');
     function renderBlindSizes(){
       listDiv.innerHTML='';
       st.sizes.forEach(function(s,idx){
         var rr=document.createElement('div');rr.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px;';
         var qtyIn=document.createElement('input');qtyIn.type='number';qtyIn.inputMode='decimal';qtyIn.className='qty-input';qtyIn.placeholder='Qty';qtyIn.value=s.qty;qtyIn.style.cssText='width:70px;flex:none;';
         qtyIn.addEventListener('input',function(e){s.qty=e.target.value;calcBlindsTotal();hasProgress=true;});
-        var sizeIn=document.createElement('input');sizeIn.type='text';sizeIn.className='item-name-input';sizeIn.placeholder='Size (e.g. 29")';sizeIn.value=s.size;sizeIn.style.cssText='width:120px;flex:none;';
+        var sizeIn=document.createElement('input');sizeIn.type='text';sizeIn.className='item-name-input';sizeIn.placeholder='Width (e.g. 40")';sizeIn.value=s.size;sizeIn.style.cssText='width:120px;flex:none;';
         sizeIn.addEventListener('input',function(e){s.size=e.target.value;hasProgress=true;});
         var rm=document.createElement('button');rm.innerHTML='&times;';rm.className='rm-btn';
         rm.addEventListener('click',function(){
@@ -941,8 +998,7 @@ function makeSubOptions(row) {
     }
     renderBlindSizes();calcBlindsTotal();
     box.appendChild(listDiv);
-
-    var addSizeBtn=document.createElement('button');addSizeBtn.className='add-btn';addSizeBtn.textContent='+ Add Size';addSizeBtn.style.cssText='padding:7px 12px;font-size:12px;margin-top:2px;';
+    var addSizeBtn=document.createElement('button');addSizeBtn.className='add-btn';addSizeBtn.textContent='+ Add Custom Size';addSizeBtn.style.cssText='padding:7px 12px;font-size:12px;margin-top:2px;';
     addSizeBtn.addEventListener('click',function(){st.sizes.push({qty:'',size:''});renderBlindSizes();});
     box.appendChild(addSizeBtn);
     return box;
@@ -1099,6 +1155,17 @@ function makeSubOptions(row) {
     });
     box.appendChild(opts2);return box;
   }
+  if(row.name==='Tub Surround'){
+    var box=document.createElement('div');box.className='sub-options';
+    box.innerHTML='<span class="field-label">Size</span>';
+    var opts=document.createElement('div');opts.className='chip-row';opts.style.marginBottom='0';
+    ['27 x 54','30 x 60'].forEach(function(sz){
+      var b=document.createElement('button');b.className='chip'+(st.size===sz?' on':'');b.textContent=sz;b.style.fontSize='12px';
+      b.addEventListener('click',function(){st.size=sz;opts.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.textContent===sz);});});
+      opts.appendChild(b);
+    });
+    box.appendChild(opts);return box;
+  }
   if(row.name==='Tub and Surround'){
     var box=document.createElement('div');box.className='sub-options';
     box.innerHTML='<span class="field-label">Size</span>';
@@ -1183,6 +1250,106 @@ function updateCount(){
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────────
+// ── Walk-through lines (ONE source for both the notes and the HCP estimate) ─────
+// Every numbered line in the notes becomes exactly one line item on the
+// estimate, in the same order. Each line: text shown in notes + the line item.
+function buildEntries(){
+  var sections=[];
+  var cur=null;
+  function startSection(label){ cur={label:label,lines:[]}; sections.push(cur); }
+  // item/option match the Worker's price map; unit is only for the notes text
+  function add(item,option,qty,detail,price,unit){
+    var name=item+(option?' - '+option:'');
+    var t=name+'  x'+qty+(unit?' '+unit:'');
+    if(price!==undefined&&price!==null)t+='  ($'+price+')';
+    if(detail)t+='  ('+detail+')';
+    cur.lines.push({text:t,li:{item:item,option:option||'',qty:qty,detail:detail||'',price:(price===undefined?null:price)}});
+  }
+  function rowLines(r){
+    var st=getSubState(r.id);
+    var q=numVal(r.qty);
+    var name=(r.name||'').trim();
+    var unit=r.unit||(r.sqft?'sq ft':'');
+    if(!name) return;
+    if(r.custom){ add(name,'',q||1,r.note,null,unit); return; }
+    if(name==='Walls'||name==='Interior Doors'){ add(name,st.coats||'1 Coat',q||1,detailOf(r,st,{coats:true}),null,unit); return; }
+    if(name==='Cabinets'){
+      Object.keys(st.cabtypes||{}).forEach(function(c){ if(st.cabtypes[c]) add('Cabinets',c,numVal((st.cabqty||{})[c])||1,detailOf(r,st)); });
+      return;
+    }
+    if(name==='Ceiling Crack'){ add(name,'',q||1,r.note,dollars(r.note)); return; }
+    if(name==='Floor Vent'){ add(name,(st.size&&st.size.indexOf('Perimeter')>-1)?'15" / 18" Perimeter':'4x10',q||1,detailOf(r,st)); return; }
+    if(name==='Blinds'){
+      var bt=st.btype||'1"';
+      function blindOpt(w){
+        if(bt==='2"') return w&&w>=30?'2" 30" and Up':'2" Under 30"';
+        return (BLIND_PRESETS.indexOf(String(w))>-1)?('1" '+w+'"'):null;
+      }
+      BLIND_PRESETS.forEach(function(p){
+        var n=numVal((st.preset||{})[p]); if(n<=0) return;
+        add('Blinds',blindOpt(parseInt(p,10)),n,(bt==='2"'?p+'"':'')+(bt==='2"'&&r.note?' | ':'')+(r.note||''));
+      });
+      (st.sizes||[]).forEach(function(s){
+        var n=numVal(s.qty); if(n<=0) return;
+        var w=parseInt(String(s.size).replace(/[^0-9]/g,''),10)||0;
+        var sz=w?w+'"':String(s.size||'').trim();
+        var o=blindOpt(w);
+        if(o) add('Blinds',o,n,[bt==='2"'?sz:'',r.note].filter(Boolean).join(' | '));
+        else add((sz||'Custom')+' Blind','',n,r.note);
+      });
+      return;
+    }
+    if(name==='Bi-Fold Door'){
+      ['24"','30"','36"','48"','60"','72"'].forEach(function(t){ if((st.types||{})[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
+      return;
+    }
+    if(name==='Smoke Alarm'||name==='Light Fixtures'){
+      Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
+      return;
+    }
+    if(name==='Light Bulbs'){
+      var bq=0,bt2=[]; Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]){ bq+=numVal((st.typeqty||{})[t]); bt2.push(t); } });
+      add(name,'Light / Vanity Bulbs',bq||1,[bt2.join(' + '),r.note].filter(Boolean).join(' | ')); return;
+    }
+    if(name==='Vanity'||name==='Tub and Surround'||name==='Tub Surround'){ add(name,st.size||'',q||1,detailOf(r,st,{size:true})); return; }
+    if(name==='Door Hinges'){ var sets=Math.ceil((q||2)/2); add(name,'',sets,[(sets*2)+' hinges',detailOf(r,st)].filter(Boolean).join(' | '),null,'sets'); return; }
+    add(name,'',q||1,detailOf(r,st),null,unit);
+  }
+
+  SECTIONS.forEach(function(sec){
+    if(sec.key==='jobinfo') return;
+    startSection(sec.label);
+    if(sec.key==='paintprep'){
+      if(wallPrepSel){
+        var opt=PREP_OPTS.find(function(o){return o.key===wallPrepSel;});
+        add('Wall Prep',opt.label,1,'',dollars(wallPrepPrices[wallPrepSel]));
+      }
+      if(numVal(vogPanel.qty)>0) add('VOG Panel Qty','',numVal(vogPanel.qty));
+      (sectionData.painting||[]).concat(sectionData.ceilingrepair||[]).forEach(rowLines);
+      return;
+    }
+    if(sec.key==='doors'&&doorType.selected){
+      var dLabel=DOOR_TYPE_LABELS[doorType.selected];
+      doorType.sizes.forEach(function(s){
+        if(numVal(s.qty)>0) add('Interior Door',dLabel,numVal(s.qty),[s.size,doorType.color,doorType.note].filter(Boolean).join(' | '));
+      });
+    }
+    var rows=sectionData[sec.key]||[];
+    if(sec.key==='exterior'){
+      // same order as the screen: storm doors, door combos, residential, flush mount, then the rest
+      var storm=function(r){return r.name==='Residential Storm Door'||r.name==='Mobile Home Storm Door';};
+      rows.filter(storm).forEach(rowLines);
+      comboDoors.forEach(function(d){ add('Door Combo','',1,d.width+'" x '+d.height+'" | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
+      resDoors.forEach(function(d){ add('Residential Door','',1,d.width+'" wide | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
+      flushDoors.forEach(function(d){ add('Flush Mount Door','',1,[d.size,d.note].filter(Boolean).join(' | ')); });
+      rows.filter(function(r){return !storm(r);}).forEach(rowLines);
+      return;
+    }
+    rows.forEach(rowLines);
+  });
+  return sections.filter(function(s){return s.lines.length;});
+}
+
 function buildExportText(){
   var sqft=(job.length&&job.width)?Math.round(parseFloat(job.length)*parseFloat(job.width)):null;
   var out='BARRWOOD SERVICES - REFURB WALK-THROUGH v2\n';
@@ -1191,61 +1358,11 @@ function buildExportText(){
   out+='Date: '+(job.date||'-')+'\n';
   if(sqft)out+='Sq Ft: '+sqft+' ('+job.length+' x '+job.width+')\n';
   out+='Paint Color: '+job.paintColor+'\n\n';
-  SECTIONS.filter(function(s){return s.key!=='jobinfo';}).forEach(function(sec){
-    var lines=[];
-    if(sec.key==='paintprep'&&wallPrepSel){
-      var opt=PREP_OPTS.find(function(o){return o.key===wallPrepSel;});
-      if(opt)lines.push('  Wall Prep: '+opt.label+' ('+wallPrepPrices[wallPrepSel]+')');
-    }
-    if(sec.key==='paintprep'&&vogPanel.qty&&parseInt(vogPanel.qty)>0){
-      lines.push('  VOG Panel  x'+vogPanel.qty);
-    }
-    if(sec.key==='doors'&&doorType.selected){
-      var typeLabel=DOOR_TYPE_LABELS[doorType.selected];
-      doorType.sizes.forEach(function(s){
-        if(s.qty&&parseInt(s.qty)>0){
-          lines.push('  Interior Door ('+typeLabel+')  '+(s.size?s.size+'  ':'')+'x'+s.qty+'  '+doorType.color+(doorType.note?'  - '+doorType.note:''));
-        }
-      });
-    }
-    if(sec.key==='exterior'){
-      comboDoors.forEach(function(d){
-        lines.push('  Door Combo  '+d.width+'" w x '+d.height+'" h  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
-      });
-      resDoors.forEach(function(d){
-        lines.push('  Residential Door  '+d.width+'" wide  Jamb: '+d.jamb+'  Swing: '+d.swing+(d.note?'  - '+d.note:''));
-      });
-      flushDoors.forEach(function(d){
-        lines.push('  Flush Mount Door'+(d.size?'  '+d.size:'')+(d.note?'  - '+d.note:''));
-      });
-    }
-    var exportRows = sec.key==='paintprep' ? (sectionData.painting||[]).concat(sectionData.ceilingrepair||[]) : (sectionData[sec.key]||[]);
-    exportRows.forEach(function(r){
-      var st=getSubState(r.id);
-      if(r.name==='Blinds'&&st.sizes){
-        st.sizes.forEach(function(s){
-          if(s.qty&&parseInt(s.qty)>0)lines.push('  Blinds  '+(s.size?s.size+'  ':'')+'x'+s.qty+(r.note?'  - '+r.note:''));
-        });
-        return;
-      }
-      var l='  '+(r.name||'(unnamed)');
-      if(r.qty)l+='  x'+r.qty+(r.unit?' '+r.unit:'');
-      if(st.size)l+='  ['+st.size+']';
-      if((r.name==='Smoke Alarm'||r.name==='Light Fixtures'||r.name==='Light Bulbs')&&st.types){
-        var sel=Object.keys(st.types).filter(function(k){return st.types[k];});
-        if(sel.length)l+='  ['+sel.map(function(k){return k+(st.typeqty&&st.typeqty[k]?' x'+st.typeqty[k]:'');}).join(' + ')+']';
-      }
-      if(st.tsshape)l+='  ['+st.tsshape+']';
-      if(st.drain)l+='  ['+st.drain+' Drain]';
-      if(st.cabtypes){var cts=Object.keys(st.cabtypes).filter(function(k){return st.cabtypes[k];});if(cts.length)l+='  ['+cts.map(function(c){return c+(st.cabqty&&st.cabqty[c]?' x'+st.cabqty[c]:'');}).join(' + ')+']';}
-      if(st.coats)l+='  ['+st.coats+']';
-      if(st.finish)l+='  ['+st.finish+']';
-      if(st.knobtype)l+='  ['+st.knobtype+']';
-      if(st.color)l+='  ['+st.color+']';
-      if(r.note)l+='  - '+r.note;
-      lines.push(l);
-    });
-    if(lines.length){out+='-- '+sec.label.toUpperCase()+' --\n';lines.forEach(function(l){out+=l+'\n';});out+='\n';}
+  var n=0;
+  buildEntries().forEach(function(sec){
+    out+='-- '+sec.label.toUpperCase()+' --\n';
+    sec.lines.forEach(function(l){ n++; out+=n+'. '+l.text+'\n'; });
+    out+='\n';
   });
   if(job.interiorNotes)out+='INTERIOR NOTES:\n'+job.interiorNotes+'\n\n';
   if(job.exteriorNotes)out+='EXTERIOR NOTES:\n'+job.exteriorNotes+'\n';
@@ -1300,64 +1417,10 @@ function detailOf(r,st,skip){
   if(r.note)bits.push(r.note);
   return bits.join(' | ');
 }
+// Line items for the HCP estimate: exactly the numbered lines in the notes, same order.
 function buildLineItems(){
   var out=[];
-  function add(item,option,qty,detail,price){ out.push({item:item,option:option||'',qty:qty,detail:detail||'',price:(price===undefined?null:price)}); }
-
-  if(wallPrepSel){
-    var opt=PREP_OPTS.find(function(o){return o.key===wallPrepSel;});
-    add('Wall Prep',opt.label,1,'',dollars(wallPrepPrices[wallPrepSel]));
-  }
-  if(numVal(vogPanel.qty)>0) add('VOG Panel Qty','',numVal(vogPanel.qty));
-
-  if(doorType.selected){
-    var dLabel=DOOR_TYPE_LABELS[doorType.selected];
-    doorType.sizes.forEach(function(s){
-      if(numVal(s.qty)>0) add('Interior Door',dLabel,numVal(s.qty),[s.size,doorType.color,doorType.note].filter(Boolean).join(' | '));
-    });
-  }
-
-  var keys=['cleanout','painting','ceilingrepair','flooring','doors','trim','piecework','exterior'];
-  keys.forEach(function(k){
-    (sectionData[k]||[]).forEach(function(r){
-      var st=getSubState(r.id);
-      var q=numVal(r.qty);
-      var name=r.name;
-      if(!name) return;
-      if(r.custom){ add(name,'',q||1,r.note); return; }
-      if(name==='Walls'||name==='Interior Doors'){ add(name,st.coats||'1 Coat',q||1,detailOf(r,st,{coats:true})); return; }
-      if(name==='Cabinets'){
-        Object.keys(st.cabtypes||{}).forEach(function(c){ if(st.cabtypes[c]) add('Cabinets',c,numVal((st.cabqty||{})[c])||1,detailOf(r,st)); });
-        return;
-      }
-      if(name==='Ceiling Crack'){ add(name,'',q||1,r.note,dollars(r.note)); return; }
-      if(name==='Floor Vent'){ add(name,(st.size&&st.size.indexOf('Perimeter')>-1)?'15" / 18" Perimeter':'4x10',q||1,detailOf(r,st)); return; }
-      if(name==='Blinds'){
-        (st.sizes||[]).forEach(function(s){
-          if(numVal(s.qty)<=0) return;
-          var w=parseInt(String(s.size).replace(/[^0-9]/g,''),10);
-          var o=(w===29||w===35||w===45)?(w+'"'):'Any other size';
-          add('Blinds',o,numVal(s.qty),[s.size,r.note].filter(Boolean).join(' | '));
-        });
-        return;
-      }
-      if(name==='Smoke Alarm'||name==='Light Fixtures'){
-        Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
-        return;
-      }
-      if(name==='Light Bulbs'){
-        var bq=0; Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]) bq+=numVal((st.typeqty||{})[t]); });
-        add(name,'Light / Vanity Bulbs',bq||1,r.note); return;
-      }
-      if(name==='Vanity'||name==='Tub and Surround'){ add(name,st.size||'',q||1,detailOf(r,st,{size:true})); return; }
-      if(name==='Door Hinges'){ add(name,'',Math.ceil((q||2)/2),detailOf(r,st)); return; }
-      add(name,'',q||1,detailOf(r,st));
-    });
-  });
-
-  comboDoors.forEach(function(d){ add('Door Combo','',1,d.width+'" x '+d.height+'" | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
-  resDoors.forEach(function(d){ add('Residential Door','',1,d.width+'" wide | Jamb '+d.jamb+' | '+d.swing+(d.note?' | '+d.note:'')); });
-  flushDoors.forEach(function(d){ add('Flush Mount Door','',1,[d.size,d.note].filter(Boolean).join(' | ')); });
+  buildEntries().forEach(function(sec){ sec.lines.forEach(function(l){ out.push(l.li); }); });
   return out;
 }
 
@@ -1379,7 +1442,8 @@ document.getElementById('btn-send-hcp').addEventListener('click',function(){
         var d=result.data, msg='Notes sent to estimate #'+estimateNum+'.';
         if(d.line_items) msg+='\n'+d.line_items+' line items added ($'+Number(d.total||0).toFixed(2)+').';
         if(d.pricing) msg+='\n'+d.pricing;
-        if(d.unmatched&&d.unmatched.length) msg+='\n\nAdded at $0 (not in price map): '+d.unmatched.join(', ');
+        if(d.unmatched&&d.unmatched.length) msg+='\n\nAdded as Scope of Work ($0): '+d.unmatched.join(', ');
+        if(d.price_book) msg+='\n'+d.price_book;
         document.getElementById('hcp-result').textContent=msg;
         setTimeout(function(){btn.classList.remove('sent');btn.textContent='Send to HCP';},2500);
       } else {
