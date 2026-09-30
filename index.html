@@ -255,6 +255,8 @@ function autoGrow(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'
 function mkNote(){ var t=document.createElement('textarea'); t.className='note-input'; t.rows=1; setTimeout(function(){autoGrow(t);},0); return t; }
 document.addEventListener('input',function(e){ var t=e.target; if(t.tagName==='TEXTAREA'&&(t.classList.contains('note-input')||t.classList.contains('grow'))) autoGrow(t); });
 var doorType = { selected:'', color:'White', sizes:[{size:'',qty:''}], note:'' };
+var BIFOLD_SIZES = ['24"','30"','36"','48"','60"','72"'];
+var SURROUND_SIZES = ['27 x 54','30 x 60'];
 var BLIND_PRESETS = ['29','32','35','45'];
 var DOOR_TYPE_LABELS = { slab:'Slab', sixPanel:'6 Panel', twoPanel:'2 Panel' };
 var wallPrepSel = '';
@@ -296,7 +298,7 @@ var SECTIONS = [
       {n:'__DIV__:Plumbing - Kitchen'},
       {n:'Plumbing Repair'},{n:'Kitchen Faucet'},{n:'Kitchen Shelf'},{n:'Kitchen Sink'},{n:'Garbage Disposal'},{n:'Metal Sink Flange'},{n:'Hood Fan'},
       {n:'__DIV__:Plumbing - Bath'},
-      {n:'Toilet Seat',type:'toiletseat'},{n:'Shower Head'},{n:'Vanity Faucet'},{n:'Vanity'},{n:'Tub and Surround'},{n:'Tub Surround'},{n:'Shower Door'},
+      {n:'Toilet Seat',type:'toiletseat'},{n:'Shower Head'},{n:'Vanity Faucet'},{n:'Vanity'},{n:'Tub and Surround'},{n:'Tub Surround'},{n:'Tub Resurface'},{n:'Shower Door'},
       {n:'New Toilet'},{n:'Toilet Rebuild'},{n:'Mobile Home Tub Faucet'},{n:'Residential Shower Valve'},
       {n:'Vanity Sink'},{n:'MH Bath Fan'},
       {n:'Towel Bar'},{n:'Toilet Paper Holder'},{n:'Towel Holder'},{n:'Mirror'}
@@ -789,7 +791,7 @@ function makeItemRow(key,row) {
   var div=document.createElement('div');div.className='item-row';div.id='row-'+row.id;
   var top=document.createElement('div');top.className='item-top';
   if(row.custom){
-    var ni=document.createElement('input');ni.type='text';ni.className='item-name-input';ni.placeholder='Item name';ni.value=row.name;
+    var ni=document.createElement('input');ni.type='text';ni.className='item-name-input';ni.placeholder='Item name / description';ni.value=row.name;
     ni.addEventListener('input',function(e){row.name=e.target.value;});top.appendChild(ni);
   } else {
     var ns=document.createElement('div');ns.style.flex='1';
@@ -797,7 +799,7 @@ function makeItemRow(key,row) {
     top.appendChild(ns);
   }
   // qty — for sqft items auto-populate (Cabinets, Carpet, LVP, Blinds, Smoke Alarm, Light Fixtures, Light Bulbs use their own qty UI instead)
-  if(row.name!=='Cabinets'&&row.name!=='Carpet'&&row.name!=='Vinyl Plank (LVP)'&&row.name!=='Blinds'&&row.name!=='Smoke Alarm'&&row.name!=='Bi-Fold Door'&&row.name!=='Light Fixtures'&&row.name!=='Light Bulbs'){
+  if(row.name!=='Cabinets'&&row.name!=='Carpet'&&row.name!=='Vinyl Plank (LVP)'&&row.name!=='Blinds'&&row.name!=='Smoke Alarm'&&row.name!=='Bi-Fold Door'&&row.name!=='Tub Surround'&&row.name!=='Light Fixtures'&&row.name!=='Light Bulbs'){
   var qi=document.createElement('input');qi.type='number';qi.inputMode='decimal';qi.className='qty-input';qi.placeholder='Qty';qi.value=row.qty;
   if(row.sqft){
     qi.className='qty-input sqft-auto-qty';qi.dataset.rowid=row.id;qi.dataset.autoset=row.qty?'false':'true';
@@ -844,6 +846,28 @@ function syncShoeMoldingFromLVP(lvpRow) {
   if(input) input.value = smRow.qty;
   updateBadgeEl('flooring'); updateCount();
 }
+// Tap one or more sizes, each gets its own qty (Bi-Fold Doors, Tub Surround)
+function sizeQtyBox(st,sizes){
+  if(!st.types)st.types={};
+  if(!st.typeqty)st.typeqty={};
+  var box=document.createElement('div');box.className='sub-options';
+  box.innerHTML='<span class="field-label">Sizes</span>';
+  sizes.forEach(function(t){
+    var r2=document.createElement('div');r2.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px;';
+    var b=document.createElement('button');b.className='chip'+(st.types[t]?' on':'');b.textContent=t;b.style.cssText='font-size:12px;min-width:56px;';
+    var qtyIn=document.createElement('input');qtyIn.type='number';qtyIn.inputMode='decimal';qtyIn.className='qty-input';qtyIn.placeholder='Qty';qtyIn.style.display=st.types[t]?'block':'none';qtyIn.value=st.typeqty[t]||'';
+    qtyIn.addEventListener('input',function(e){st.typeqty[t]=e.target.value;hasProgress=true;});
+    b.addEventListener('click',function(){
+      st.types[t]=!st.types[t];
+      b.classList.toggle('on',st.types[t]);
+      qtyIn.style.display=st.types[t]?'block':'none';
+      if(st.types[t]&&!st.typeqty[t]){st.typeqty[t]='1';qtyIn.value='1';}
+      hasProgress=true;
+    });
+    r2.appendChild(b);r2.appendChild(qtyIn);box.appendChild(r2);
+  });
+  return box;
+}
 function makeSubOptions(row) {
   var st=getSubState(row.id);
   if(row.name==='Floor Vent'){
@@ -857,27 +881,8 @@ function makeSubOptions(row) {
     });
     box.appendChild(opts);return box;
   }
-  if(row.name==='Bi-Fold Door'){
-    if(!st.types)st.types={};
-    if(!st.typeqty)st.typeqty={};
-    var box=document.createElement('div');box.className='sub-options';
-    box.innerHTML='<span class="field-label">Sizes</span>';
-    ['24"','30"','36"','48"','60"','72"'].forEach(function(t){
-      var r2=document.createElement('div');r2.style.cssText='display:flex;align-items:center;gap:8px;margin-top:6px;';
-      var b=document.createElement('button');b.className='chip'+(st.types[t]?' on':'');b.textContent=t;b.style.cssText='font-size:12px;min-width:56px;';
-      var qtyIn=document.createElement('input');qtyIn.type='number';qtyIn.inputMode='decimal';qtyIn.className='qty-input';qtyIn.placeholder='Qty';qtyIn.style.display=st.types[t]?'block':'none';qtyIn.value=st.typeqty[t]||'';
-      qtyIn.addEventListener('input',function(e){st.typeqty[t]=e.target.value;hasProgress=true;});
-      b.addEventListener('click',function(){
-        st.types[t]=!st.types[t];
-        b.classList.toggle('on',st.types[t]);
-        qtyIn.style.display=st.types[t]?'block':'none';
-        if(st.types[t]&&!st.typeqty[t]){st.typeqty[t]='1';qtyIn.value='1';}
-        hasProgress=true;
-      });
-      r2.appendChild(b);r2.appendChild(qtyIn);box.appendChild(r2);
-    });
-    return box;
-  }
+  if(row.name==='Bi-Fold Door') return sizeQtyBox(st,BIFOLD_SIZES);
+  if(row.name==='Tub Surround') return sizeQtyBox(st,SURROUND_SIZES);
   if(row.name==='Smoke Alarm'){
     if(!st.types)st.types={};
     if(!st.typeqty)st.typeqty={};
@@ -1155,17 +1160,6 @@ function makeSubOptions(row) {
     });
     box.appendChild(opts2);return box;
   }
-  if(row.name==='Tub Surround'){
-    var box=document.createElement('div');box.className='sub-options';
-    box.innerHTML='<span class="field-label">Size</span>';
-    var opts=document.createElement('div');opts.className='chip-row';opts.style.marginBottom='0';
-    ['27 x 54','30 x 60'].forEach(function(sz){
-      var b=document.createElement('button');b.className='chip'+(st.size===sz?' on':'');b.textContent=sz;b.style.fontSize='12px';
-      b.addEventListener('click',function(){st.size=sz;opts.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.textContent===sz);});});
-      opts.appendChild(b);
-    });
-    box.appendChild(opts);return box;
-  }
   if(row.name==='Tub and Surround'){
     var box=document.createElement('div');box.className='sub-options';
     box.innerHTML='<span class="field-label">Size</span>';
@@ -1258,7 +1252,9 @@ function buildEntries(){
   var cur=null;
   function startSection(label){ cur={label:label,lines:[]}; sections.push(cur); }
   // item/option match the Worker's price map; unit is only for the notes text
+  var notePrice=null; // "$750" typed in an item's note -> that line's price
   function add(item,option,qty,detail,price,unit){
+    if((price===undefined||price===null)&&notePrice!==null) price=notePrice;
     var name=item+(option?' - '+option:'');
     var t=name+'  x'+qty+(unit?' '+unit:'');
     if(price!==undefined&&price!==null)t+='  ($'+price+')';
@@ -1266,12 +1262,25 @@ function buildEntries(){
     cur.lines.push({text:t,li:{item:item,option:option||'',qty:qty,detail:detail||'',price:(price===undefined?null:price)}});
   }
   function rowLines(r){
+    notePrice=typedPrice(r.note);
+    if(r.custom&&notePrice===null) notePrice=typedPrice(r.name);
+    rowLines2(r);
+    notePrice=null;
+  }
+  function rowLines2(r){
     var st=getSubState(r.id);
     var q=numVal(r.qty);
     var name=(r.name||'').trim();
     var unit=r.unit||(r.sqft?'sq ft':'');
+    if(r.custom){
+      // Added items always come through: if the name box was left empty,
+      // whatever was typed in the note becomes the name.
+      var note=(r.note||'').trim();
+      if(!name&&!note&&!q) return;
+      if(!name){ name=note||'Unnamed item'; note=''; }
+      add(name,'',q||1,note,null,unit); return;
+    }
     if(!name) return;
-    if(r.custom){ add(name,'',q||1,r.note,null,unit); return; }
     if(name==='Walls'||name==='Interior Doors'){ add(name,st.coats||'1 Coat',q||1,detailOf(r,st,{coats:true}),null,unit); return; }
     if(name==='Cabinets'){
       Object.keys(st.cabtypes||{}).forEach(function(c){ if(st.cabtypes[c]) add('Cabinets',c,numVal((st.cabqty||{})[c])||1,detailOf(r,st)); });
@@ -1299,8 +1308,8 @@ function buildEntries(){
       });
       return;
     }
-    if(name==='Bi-Fold Door'){
-      ['24"','30"','36"','48"','60"','72"'].forEach(function(t){ if((st.types||{})[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
+    if(name==='Bi-Fold Door'||name==='Tub Surround'){
+      (name==='Tub Surround'?SURROUND_SIZES:BIFOLD_SIZES).forEach(function(t){ if((st.types||{})[t]) add(name,t,numVal((st.typeqty||{})[t])||1,r.note); });
       return;
     }
     if(name==='Smoke Alarm'||name==='Light Fixtures'){
@@ -1311,7 +1320,7 @@ function buildEntries(){
       var bq=0,bt2=[]; Object.keys(st.types||{}).forEach(function(t){ if(st.types[t]){ bq+=numVal((st.typeqty||{})[t]); bt2.push(t); } });
       add(name,'Light / Vanity Bulbs',bq||1,[bt2.join(' + '),r.note].filter(Boolean).join(' | ')); return;
     }
-    if(name==='Vanity'||name==='Tub and Surround'||name==='Tub Surround'){ add(name,st.size||'',q||1,detailOf(r,st,{size:true})); return; }
+    if(name==='Vanity'||name==='Tub and Surround'){ add(name,st.size||'',q||1,detailOf(r,st,{size:true})); return; }
     if(name==='Door Hinges'){ var sets=Math.ceil((q||2)/2); add(name,'',sets,[(sets*2)+' hinges',detailOf(r,st)].filter(Boolean).join(' | '),null,'sets'); return; }
     add(name,'',q||1,detailOf(r,st),null,unit);
   }
@@ -1403,6 +1412,8 @@ var HCP_WORKER_URL = 'https://curly-unit-149a.dave-366.workers.dev';
 // Each entry: item + option match the price map in the Worker. qty, detail
 // (extra description text) and an optional price override in dollars.
 function numVal(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+// Only a $ amount counts as a typed price ("$750", "$1,200"), so plain numbers in notes aren't mistaken for prices
+function typedPrice(s){ var m=String(s||'').replace(/,/g,'').match(/\$\s*(\d+(\.\d+)?)/); return m?parseFloat(m[1]):null; }
 function dollars(s){ var m=String(s||'').replace(/,/g,'').match(/\$\s*(\d+(\.\d+)?)/)||String(s||'').replace(/,/g,'').match(/^\s*(\d+(\.\d+)?)\s*$/); return m?parseFloat(m[1]):null; }
 function detailOf(r,st,skip){
   var bits=[];
