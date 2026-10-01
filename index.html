@@ -1164,7 +1164,7 @@ function makeSubOptions(row) {
     var box=document.createElement('div');box.className='sub-options';
     box.innerHTML='<span class="field-label">Size</span>';
     var opts=document.createElement('div');opts.className='chip-row';opts.style.marginBottom='8px';
-    ['30 x 60','27 x 54'].forEach(function(sz){
+    ['30 x 60','27 x 54','32 x 60'].forEach(function(sz){
       var b=document.createElement('button');b.className='chip'+(st.size===sz?' on':'');b.textContent=sz;b.style.fontSize='12px';
       b.addEventListener('click',function(){st.size=sz;opts.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.textContent===sz);});});
       opts.appendChild(b);
