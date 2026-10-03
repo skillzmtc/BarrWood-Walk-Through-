@@ -1,9 +1,10 @@
-const CACHE_NAME = 'barrwood-walkthrough-v3';
+const CACHE_NAME = 'barrwood-walkthrough-v4';
 const FILES_TO_CACHE = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './fonts/Gruppo.woff2'
 ];
 
 self.addEventListener('install', function(event) {
