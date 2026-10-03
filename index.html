@@ -30,6 +30,11 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     button, input, select, textarea { font-family: inherit; }
+    body { zoom: var(--zoom, 1); -webkit-text-stroke: .45px currentColor; text-rendering: optimizeLegibility; }
+    .header-top { flex-wrap: wrap; row-gap: 10px; }
+    .header-top .brand { min-width: 150px; }
+    .header-btns { margin-left: auto; }
+    #btn-size { background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2); color: rgba(255,255,255,.9); border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
     body { font-family: "Gruppo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(180deg, #16324a 0%, #2a5f88 100%); color: var(--text); max-width: 600px; margin: 0 auto; min-height: 100vh; }
 
     #app-header { background: linear-gradient(160deg, #12283c 0%, #2e6da4 60%, #3b7fb8 100%); position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 20px rgba(0,0,0,.6); }
@@ -195,6 +200,7 @@
   <div class="header-bar">
     <span class="header-dot" id="header-dot"></span>
     <span id="item-count"></span>
+    <button id="btn-size" type="button" title="Text size">Aa</button>
   </div>
 </div>
 
@@ -241,6 +247,23 @@
 <input type="file" id="photo-input" accept="image/*" multiple>
 
 <script>
+  // Text size (Aa button), same as BarrWood Pulse; remembered on this device.
+  var SIZES = [1, 1.3, 1.6, 2, 2.5];
+  function getZoom() {
+    try { var z = parseFloat(localStorage.getItem('bwZoom')); if (SIZES.indexOf(z) >= 0) return z; } catch (e) {}
+    return window.innerWidth >= 800 ? 2 : 1.3;
+  }
+  function setZoom(z) {
+    document.documentElement.style.setProperty('--zoom', z);
+    try { localStorage.setItem('bwZoom', z); } catch (e) {}
+    var b = document.getElementById('btn-size');
+    if (b) b.title = 'Text size: ' + Math.round(z * 100) + '% (tap to change)';
+  }
+  setZoom(getZoom());
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btn-size') { var z = getZoom(); setZoom(SIZES[(SIZES.indexOf(z) + 1) % SIZES.length]); }
+  });
+
 if (!Object.values) { Object.values = function(o) { return Object.keys(o).map(function(k){ return o[k]; }); }; }
 if (!Array.prototype.findIndex) { Array.prototype.findIndex = function(fn){ for(var i=0;i<this.length;i++){if(fn(this[i],i))return i;} return -1; }; }
 
