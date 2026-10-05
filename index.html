@@ -270,6 +270,25 @@
     html[data-theme=day] #export-pre { background:#f6fafc; color:var(--text); }
     html[data-theme=day] .add-btn, html[data-theme=day] #photo-add-btn { background:#fff; }
     #btn-theme { background: rgba(41,227,255,.05); border: 1px solid rgba(41,227,255,.35); color: var(--text); border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; margin-left: 6px; }
+
+    /* ===== SUGGEST A CHANGE (Dave, Oct 5, 2026) ===== */
+    #btn-suggest { background: rgba(255,181,71,.10); border: 1px solid #ffb547; color: #ffd08a; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; margin-left: 6px; white-space: nowrap; }
+    html[data-theme=day] #btn-suggest { background:#fff7e8; border-color:#e9a33a; color:#7a4a00; }
+    #suggest-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 999; align-items: flex-end; justify-content: center; }
+    #suggest-overlay.open { display: flex; }
+    #suggest-modal { background: #040e17; border: 1px solid rgba(41,227,255,.35); border-radius: 22px 22px 0 0; width: 100%; max-width: 600px; max-height: 92vh; display: flex; flex-direction: column; }
+    html[data-theme=day] #suggest-modal { background:#fff; color:var(--text); }
+    .sg-q { margin-bottom: 18px; }
+    .sg-q .field-label { display: block; margin-bottom: 8px; font-size: 13px; }
+    .sg-help { font-size: 13px; color: var(--text-light); margin: -4px 0 8px; line-height: 1.4; }
+    .sg-q input, .sg-q textarea { width: 100%; padding: 12px; border-radius: 10px; font-size: 16px; border: 1px solid var(--border); background:#040e17; color: var(--text); }
+    html[data-theme=day] .sg-q input, html[data-theme=day] .sg-q textarea { background:#fff; }
+    .sg-q textarea { min-height: 80px; resize: vertical; }
+    .sg-q .chip { padding: 11px 16px; font-size: 15px; }
+    .sg-or { text-align:center; font-size: 13px; color: var(--text-light); margin: 8px 0; }
+    #sg-error { color: #ff7a7a; font-size: 14px; font-weight: 700; margin-bottom: 10px; display: none; }
+    #btn-sg-send { width: 100%; padding: 15px; font-size: 16px; font-weight: 800; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, rgba(41,227,255,.24), rgba(61,255,162,.18)); border: 1px solid var(--cyan); color:#eaffff; }
+    html[data-theme=day] #btn-sg-send { background:linear-gradient(135deg,#0a7ea4,#0c9a63); color:#fff; }
   </style>
 </head>
 <body>
@@ -293,6 +312,7 @@
     <span id="item-count"></span>
     <button id="btn-size" type="button" title="Text size">Aa</button>
     <button id="btn-theme" type="button" title="Daylight / night mode">☀</button>
+    <button id="btn-suggest" type="button" title="Suggest a change to this app">💡 Suggest</button>
   </div>
 </div>
 
@@ -333,6 +353,29 @@
       <pre id="export-pre"></pre>
     </div>
     <div class="modal-foot"><button class="modal-cancel" id="btn-close-export2">Close</button></div>
+  </div>
+</div>
+
+
+<!-- Suggest a change -->
+<div id="suggest-overlay">
+  <div id="suggest-modal">
+    <div class="modal-head"><span>💡 Suggest a Change</span><button class="modal-close" id="sg-close">&times;</button></div>
+    <div class="modal-body">
+      <div class="sg-help" style="margin:0 0 16px;">Tap your answers. Tip: tap the 🎤 on your keyboard to talk instead of type.</div>
+      <div class="sg-q"><span class="field-label">1. Your name</span><input type="text" id="sg-name" placeholder="Your name"></div>
+      <div class="sg-q"><span class="field-label">2. What do you want?</span><div class="chip-row" id="sg-kind"></div></div>
+      <div class="sg-q"><span class="field-label">3. Which section?</span><div class="chip-row" id="sg-section"></div></div>
+      <div class="sg-q"><span class="field-label">4. Name of the button</span><div class="sg-help">Example: Ceiling Fan, Bi-Fold Door 30"</div><input type="text" id="sg-item" placeholder="Button name"></div>
+      <div class="sg-q"><span class="field-label">5. How is it counted?</span><div class="chip-row" id="sg-unit"></div></div>
+      <div class="sg-q"><span class="field-label">6. Price</span><div class="sg-help">Give a price OR the price book name / link.</div>
+        <input type="number" id="sg-price" inputmode="decimal" placeholder="$ Price (example: 45)">
+        <div class="sg-or">— or —</div>
+        <input type="text" id="sg-book" placeholder="Price book name or link"></div>
+      <div class="sg-q"><span class="field-label">7. Anything else? (optional)</span><textarea id="sg-notes" placeholder="Extra details"></textarea></div>
+      <div id="sg-error"></div>
+      <button id="btn-sg-send" type="button">Send Suggestion</button>
+    </div>
   </div>
 </div>
 
@@ -1650,6 +1693,62 @@ render();
     var m=document.querySelector('meta[name=theme-color]'); if(m) m.content=day?'#ffffff':'#02060b'; }
   setTheme(document.documentElement.dataset.theme==='day'?'day':'night');
   var b=document.getElementById('btn-theme'); if(b) b.onclick=function(){ setTheme(document.documentElement.dataset.theme==='day'?'night':'day'); };
+})();
+</script>
+<script>
+// ── Suggest a Change (Dave, Oct 5, 2026) ──────────────────────────────────────
+// Opens the phone's email app with a filled-in request. Change SUGGEST_TO to
+// send suggestions somewhere else.
+(function(){
+  var SUGGEST_TO='info@barrwoodservices.com';
+  var KINDS=['Add a new button','Change a button','Change a price','Remove a button','Something else'];
+  var SECS=SECTIONS.map(function(x){return x.label;}).concat(['New section','Not sure']);
+  var UNITS=['Each','Sq ft','Lin ft','One price for the job','Not sure'];
+  var pick={kind:'',section:'',unit:''};
+  function chips(id,list,key){var row=document.getElementById(id);row.innerHTML='';
+    list.forEach(function(t){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;
+      b.onclick=function(){pick[key]=t;Array.prototype.forEach.call(row.children,function(c){c.classList.toggle('on',c===b);});};row.appendChild(b);});}
+  function v(id){return document.getElementById(id).value.trim();}
+  function open(){
+    pick={kind:'',section:'',unit:''};chips('sg-kind',KINDS,'kind');chips('sg-section',SECS,'section');chips('sg-unit',UNITS,'unit');
+    ['sg-item','sg-price','sg-book','sg-notes'].forEach(function(i){document.getElementById(i).value='';});
+    try{document.getElementById('sg-name').value=localStorage.getItem('bwSuggestName')||'';}catch(e){}
+    document.getElementById('sg-error').style.display='none';
+    document.getElementById('suggest-overlay').classList.add('open');}
+  function close(){document.getElementById('suggest-overlay').classList.remove('open');}
+  document.getElementById('btn-suggest').onclick=open;
+  document.getElementById('sg-close').onclick=close;
+  document.getElementById('btn-sg-send').onclick=function(){
+    var name=v('sg-name'),item=v('sg-item'),price=v('sg-price'),book=v('sg-book'),miss=[];
+    if(!name)miss.push('your name');if(!pick.kind)miss.push('what you want');if(!pick.section)miss.push('the section');if(!item)miss.push('the button name');
+    var needsPrice=pick.kind==='Add a new button'||pick.kind==='Change a price';
+    if(needsPrice&&!price&&!book)miss.push('a price or price book name');
+    var err=document.getElementById('sg-error');
+    if(miss.length){err.textContent='Please fill in: '+miss.join(', ');err.style.display='block';err.scrollIntoView({block:'center'});return;}
+    try{localStorage.setItem('bwSuggestName',name);}catch(e){}
+    var data={name:name,kind:pick.kind,section:pick.section,item:item,unit:pick.unit,price:price,pricebook:book,notes:v('sg-notes')};
+    var btn=document.getElementById('btn-sg-send');btn.disabled=true;btn.textContent='Sending...';
+    function done(){btn.textContent='✅ Sent! Thank you';setTimeout(function(){btn.disabled=false;btn.textContent='Send Suggestion';close();},1500);}
+    function viaEmail(){ // backup if the app can't reach the server
+      var lines=['APP CHANGE REQUEST - Walk-Through App','','From: '+name,'Request: '+pick.kind,'Section: '+pick.section,'Button: '+item,
+        'Counted by: '+(pick.unit||'-'),'Price: '+(price?'$'+price:'-'),'Price book: '+(book||'-'),'Notes: '+(data.notes||'-')];
+      window.location.href='mailto:'+SUGGEST_TO+'?subject='+encodeURIComponent('App Change Request - '+item+' ('+name+')')+'&body='+encodeURIComponent(lines.join('\n'));
+      btn.disabled=false;btn.textContent='Send Suggestion';setTimeout(close,800);}
+    function post(tries){
+      try{data.crew_code=localStorage.getItem('bwCrewCode')||'';}catch(e){data.crew_code='';}
+      fetch(HCP_WORKER_URL+'/suggest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+        .then(function(r){return r.json().then(function(j){return {status:r.status,data:j};});})
+        .then(function(r){
+          if(r.data&&r.data.success) return done();
+          if(r.status===401&&r.data&&r.data.need_code&&tries<2){
+            var c=prompt('Enter the crew code (ask Dave). You only need to do this once on this phone.');
+            if(c){try{localStorage.setItem('bwCrewCode',c.trim());}catch(e){} return post(tries+1);}
+          }
+          viaEmail();
+        }).catch(viaEmail);
+    }
+    post(0);
+  };
 })();
 </script>
 </body>
