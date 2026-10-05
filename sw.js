@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barrwood-walkthrough-v12';
+const CACHE_NAME = 'barrwood-walkthrough-v13';
 const FILES_TO_CACHE = [
   './index.html',
   './manifest.json',

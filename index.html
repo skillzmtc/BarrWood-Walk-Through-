@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BarrWood">
   <meta name="theme-color" content="#02060b">
+  <script>try{ if(localStorage.getItem('bwTheme')==='day') document.documentElement.dataset.theme='day'; }catch(e){}</script>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>BarrWood Services</title>
@@ -238,6 +239,37 @@
     #export-pre { background:#02060b; border: 1px solid var(--border); }
     .rm-btn { color: rgba(255,120,130,.7); }
     @media (max-width: 640px) { .brand-name { letter-spacing: 0; } .brand-sub { letter-spacing: .1em; font-size: 9px; } }
+
+    /* ===== DAYLIGHT MODE (Dave, Oct 4, 2026; same as Pulse) ===== */
+    html[data-theme=day] { --navy:#eef4f8; --blue:#0a7ea4; --blue-mid:#0c8db8; --blue-light:#0a7ea4; --green:#0f8a5f; --green-light:#0c9a63;
+      --green-pale:rgba(12,154,99,.10); --blue-pale:#f6fafc; --surface:#ffffff; --card:#ffffff; --border:rgba(10,126,164,.26);
+      --text:#0d2233; --text-mid:#1d3a4f; --text-light:rgba(13,34,51,.62); --cyan:#0a7ea4; background:#f3f7fa; color-scheme:light; }
+    html[data-theme=day] body { color:var(--text); background:
+      radial-gradient(900px 600px at 50% -10%, rgba(10,126,164,.08), transparent 60%),
+      radial-gradient(circle, rgba(10,126,164,.07) 1px, transparent 1.3px) 0 0/26px 26px,
+      linear-gradient(180deg,#f7fafc,#eaf1f6); background-attachment: fixed; }
+    html[data-theme=day] #app-header { background: rgba(255,255,255,.97); border-bottom:1px solid var(--border); box-shadow:0 2px 14px rgba(13,34,51,.06); }
+    html[data-theme=day] .brand-name { color:#0d2233; text-shadow:none; }
+    html[data-theme=day] .card, html[data-theme=day] .acc-head, html[data-theme=day] .acc-body, html[data-theme=day] .note-card, html[data-theme=day] .photo-section,
+    html[data-theme=day] .sub-section, html[data-theme=day] .spec-box, html[data-theme=day] .sub-options, html[data-theme=day] .item-row { background:#fff; box-shadow:0 1px 2px rgba(13,34,51,.06), 0 6px 18px rgba(13,34,51,.06); color:var(--text); }
+    html[data-theme=day] .acc-head.open, html[data-theme=day] .acc-head:active { background: rgba(10,126,164,.08); }
+    html[data-theme=day] input[type=text], html[data-theme=day] input[type=email], html[data-theme=day] input[type=date], html[data-theme=day] input[type=number], html[data-theme=day] select,
+    html[data-theme=day] .sqft-display, html[data-theme=day] textarea.grow, html[data-theme=day] .note-area, html[data-theme=day] .note-input, html[data-theme=day] .item-name-input,
+    html[data-theme=day] .qty-input, html[data-theme=day] .door-qty, html[data-theme=day] .door-color, html[data-theme=day] .prep-price-edit { background:#fff; color:var(--text); border-color:var(--border); }
+    html[data-theme=day] .sqft-display.has-val { color:#0c7a50; border-color:#0c9a63; }
+    html[data-theme=day] #f-estimate { background:#fff7e8; border-color:#e9a33a; color:#7a4a00; }
+    html[data-theme=day] .chip, html[data-theme=day] .prep-chip { background:#fff; color:var(--text); }
+    html[data-theme=day] .chip.on, html[data-theme=day] .prep-chip.on { background:#0a7ea4; border-color:#0a7ea4; color:#fff; box-shadow:0 2px 8px rgba(10,126,164,.3); }
+    html[data-theme=day] .chip.green-chip.on { background:#0c9a63; border-color:#0c9a63; }
+    html[data-theme=day] .acc-num, html[data-theme=day] .sub-label, html[data-theme=day] .modal-head span { color:var(--cyan); }
+    html[data-theme=day] .acc-label, html[data-theme=day] .chevron, html[data-theme=day] label { color:var(--text); }
+    html[data-theme=day] #btn-new, html[data-theme=day] #btn-size, html[data-theme=day] #btn-theme, html[data-theme=day] .modal-cancel, html[data-theme=day] .exit-btn-stay { background:#fff; color:var(--text); border-color:var(--border); }
+    html[data-theme=day] #btn-export, html[data-theme=day] #btn-send-email, html[data-theme=day] #btn-send-hcp, html[data-theme=day] #btn-copy { background:linear-gradient(135deg,#0a7ea4,#0c9a63); color:#fff; border-color:#0a7ea4; box-shadow:0 2px 8px rgba(10,126,164,.25); }
+    html[data-theme=day] #export-modal, html[data-theme=day] .exit-modal { background:#fff; color:var(--text); box-shadow:0 10px 40px rgba(13,34,51,.18); }
+    html[data-theme=day] .modal-close { background:rgba(13,34,51,.08); color:var(--text); }
+    html[data-theme=day] #export-pre { background:#f6fafc; color:var(--text); }
+    html[data-theme=day] .add-btn, html[data-theme=day] #photo-add-btn { background:#fff; }
+    #btn-theme { background: rgba(41,227,255,.05); border: 1px solid rgba(41,227,255,.35); color: var(--text); border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -260,6 +292,7 @@
     <span class="header-dot" id="header-dot"></span>
     <span id="item-count"></span>
     <button id="btn-size" type="button" title="Text size">Aa</button>
+    <button id="btn-theme" type="button" title="Daylight / night mode">☀</button>
   </div>
 </div>
 
@@ -1608,6 +1641,16 @@ if('serviceWorker' in navigator){
 }
 
 render();
+</script>
+<script>
+(function(){
+  function setTheme(t){ var day=t==='day'; if(day) document.documentElement.dataset.theme='day'; else delete document.documentElement.dataset.theme;
+    try{ localStorage.setItem('bwTheme', day?'day':'night'); }catch(e){}
+    var b=document.getElementById('btn-theme'); if(b){ b.textContent=day?'☾':'☀'; b.title=day?'Switch to night mode':'Switch to daylight mode'; }
+    var m=document.querySelector('meta[name=theme-color]'); if(m) m.content=day?'#ffffff':'#02060b'; }
+  setTheme(document.documentElement.dataset.theme==='day'?'day':'night');
+  var b=document.getElementById('btn-theme'); if(b) b.onclick=function(){ setTheme(document.documentElement.dataset.theme==='day'?'night':'day'); };
+})();
 </script>
 </body>
 </html>
