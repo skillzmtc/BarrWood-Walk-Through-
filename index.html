@@ -1483,11 +1483,25 @@ document.getElementById('btn-send-hcp').addEventListener('click',function(){
   if(!estimateNum){ alert('Enter an estimate number first.'); return; }
   var text=buildExportText();
   btn.disabled=true;btn.classList.remove('sent','failed');btn.textContent='Sending...';
-  fetch(HCP_WORKER_URL+'/send-walkthrough',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({estimate_number:estimateNum,content:text,items:buildLineItems()})
-  }).then(function(res){return res.json().then(function(data){return {ok:res.ok,data:data};});})
+  // Security: Housecall Pro only accepts walk-throughs that carry the crew code (asked once, saved on this phone).
+  var payload={estimate_number:estimateNum,content:text,items:buildLineItems()};
+  function crewCode(){ try{ return localStorage.getItem('bwCrewCode')||''; }catch(e){ return ''; } }
+  function post(tries){
+    payload.crew_code=crewCode();
+    return fetch(HCP_WORKER_URL+'/send-walkthrough',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(res){return res.json().then(function(data){return {ok:res.ok,status:res.status,data:data};});})
+      .then(function(result){
+        if(result.status===401 && result.data && result.data.need_code && tries<2){
+          var c=prompt(tries===0 && !crewCode() ? 'Enter the crew code (ask Dave). You only need to do this once on this phone.' : 'That crew code didn\'t work. Try again (ask Dave):');
+          if(c){ try{ localStorage.setItem('bwCrewCode',c.trim()); }catch(e){} return post(tries+1); }
+        }
+        return result;
+      });
+  }
+  post(0)
     .then(function(result){
       btn.disabled=false;
       if(result.ok && result.data.success){
